@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.1"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.2"
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale.CHINA }
 
         composer = SentenceComposer(settings,
@@ -128,7 +128,14 @@ class MainActivity : AppCompatActivity() {
         b.tvFlow.text = ""
         flow.clear()
         speak(text)
-        history.insert(0, "• $text\n")
+        val tag = when (src) {
+            "deepseek" -> "[☁DeepSeek]"
+            "local" -> "[直拼·未配Key]"
+            "fallback" -> "[回退·DeepSeek失败]"
+            "demo" -> "[演示]"
+            else -> ""
+        }
+        history.insert(0, "• $text  $tag\n")
         b.tvHistory.text = history.toString()
     }
 
