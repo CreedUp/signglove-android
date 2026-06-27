@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 /** 调 DeepSeek 把手势词序列组合成通顺中文句子 (同 PC server.py:deepseek_combine)。 */
 object DeepSeek {
     private val client = OkHttpClient.Builder()
-        .callTimeout(30, TimeUnit.SECONDS)
+        .callTimeout(12, TimeUnit.SECONDS)
         .build()
 
     private const val SYS =

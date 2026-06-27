@@ -62,11 +62,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.1"
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale.CHINA }
 
         composer = SentenceComposer(settings,
             onWord = { w -> flow.append(if (flow.isEmpty()) "" else " ").append(w)
                 b.tvFlow.text = "手势词: $flow"; b.tvGesture.text = "… 组句中" },
+            onComposing = { flow.clear(); b.tvFlow.text = ""; b.tvGesture.text = "… 组句中" },
             onSentence = { text, src -> onSentence(text, src) })
 
         vitals = Vitals(

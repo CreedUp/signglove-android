@@ -11,6 +11,7 @@ import kotlin.concurrent.thread
 class SentenceComposer(
     private val settings: Settings,
     private val onWord: (String) -> Unit,          // 每个手势词(累积小字)
+    private val onComposing: () -> Unit,           // 停顿触发组句(清词流, 显示"组句中")
     private val onSentence: (String, String) -> Unit  // (句子, 来源: deepseek/local)
 ) {
     private val main = Handler(Looper.getMainLooper())
@@ -32,6 +33,7 @@ class SentenceComposer(
         if (buffer.isEmpty()) return
         val words = buffer.toList()
         buffer.clear()
+        main.post { onComposing() }   // 清词流, 进入"组句中"
         val key = settings.deepseekKey
         if (key.isBlank()) {
             main.post { onSentence(words.joinToString(" "), "local") }
