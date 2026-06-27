@@ -35,14 +35,21 @@ class MainActivity : AppCompatActivity() {
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
 
-    // 手势模拟
+    // 手势模拟: 发一组(2~4)词 → 停顿(>pauseSec)触发组句 → 再发下一组
     private var simRunning = false
+    private var simWordsLeft = 0
     private val simNames = listOf("fist", "open", "point", "victory", "ok")
     private val simTick = object : Runnable {
         override fun run() {
             if (!simRunning) return
             GestureMap.word(simNames[Random.nextInt(simNames.size)])?.let { composer.feed(it) }
-            main.postDelayed(this, (700 + Random.nextInt(500)).toLong())
+            simWordsLeft--
+            if (simWordsLeft > 0) {
+                main.postDelayed(this, (600 + Random.nextInt(400)).toLong())  // 词间 0.6~1.0s
+            } else {
+                simWordsLeft = 2 + Random.nextInt(3)                           // 下一组 2~4 词
+                main.postDelayed(this, (settings.pauseSec * 1000).toLong() + 1200) // 停顿>阈值, 触发组句
+            }
         }
     }
 
@@ -97,7 +104,8 @@ class MainActivity : AppCompatActivity() {
 
         b.swSim.setOnCheckedChangeListener { _, on ->
             simRunning = on
-            if (on) main.post(simTick) else main.removeCallbacks(simTick)
+            if (on) { simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
+            else main.removeCallbacks(simTick)
         }
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
