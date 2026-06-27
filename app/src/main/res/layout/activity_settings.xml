@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="🆘 紧急求助（微信推送）" android:textColor="@color/txt"
+            android:textSize="16sp" android:textStyle="bold" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="Server酱 SendKey" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etServerchan" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="SCTxxxxxx" android:inputType="text" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="企业微信群机器人 Webhook" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etWebhook" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="https://qyapi.weixin.qq.com/.../send?key=..." android:inputType="text" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="用户称呼（求助消息里显示）" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="手语手套用户" android:inputType="text" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="22dp" android:text="☁ 云端组句（DeepSeek）" android:textColor="@color/txt"
+            android:textSize="16sp" android:textStyle="bold" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="DeepSeek API Key" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etDsKey" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="sk-xxxxxx（留空则手势词直接拼接）" android:inputType="text" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="停顿断句秒数" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etPause" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="2.5" android:inputType="numberDecimal" android:textSize="14sp" />
+
+        <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="22dp" android:text="💾 保存设置" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="密钥仅存本机，请勿外传。\nServer酱: sct.ftqq.com 扫码拿 SendKey 并绑定方糖服务号。\n企业微信: 建群→群机器人→复制 Webhook，家人拉进群即可收到。"
+            android:textColor="@color/mut" android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

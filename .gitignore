@@ -1,0 +1,12 @@
+# 编译产物 / IDE
+*.iml
+.gradle/
+/local.properties
+.idea/
+build/
+/app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.keystore
