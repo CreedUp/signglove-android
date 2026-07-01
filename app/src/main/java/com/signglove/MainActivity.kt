@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
     private lateinit var settings: Settings
-    private lateinit var bt: BluetoothSpp
+    private lateinit var bt: BluetoothBle
     private lateinit var composer: SentenceComposer
     private lateinit var vitals: Vitals
     private lateinit var sos: Sos
@@ -79,7 +79,8 @@ class MainActivity : AppCompatActivity() {
             onCountdown = { sec, reason -> updateCountdown(sec, reason) },
             onPushed = { ok, detail -> onPushed(ok, detail) })
 
-        bt = BluetoothSpp(
+        bt = BluetoothBle(
+            ctx = this,
             onLine = { line -> GestureMap.parseGesture(line)?.let { name ->
                 GestureMap.word(name)?.let { composer.feed(it) } } },
             onState = { c -> connected = c
@@ -98,7 +99,7 @@ class MainActivity : AppCompatActivity() {
             if (connected) { bt.disconnect() }
             else {
                 val pos = b.spDevices.selectedItemPosition
-                if (pos < 0 || pos >= deviceMacs.size) { toast("请先在系统设置配对 JDY-31, 再刷新选择"); return@setOnClickListener }
+                if (pos < 0 || pos >= deviceMacs.size) { toast("请先在系统设置配对 JDY-18, 再刷新选择"); return@setOnClickListener }
                 if (!hasBt()) { requestPerms(); return@setOnClickListener }
                 bt.connect(deviceMacs[pos]); toast("连接中…")
             }
@@ -196,7 +197,7 @@ class MainActivity : AppCompatActivity() {
         if (!bt.isEnabled()) { b.tvBle.text = "蓝牙: 未开启(请打开手机蓝牙)" }
         val list = bt.bondedDevices()
         deviceMacs = list.map { it.second }
-        val labels = if (list.isEmpty()) listOf("无已配对设备(先配对 JDY-31)")
+        val labels = if (list.isEmpty()) listOf("无已配对设备(先配对 JDY-18)")
                      else list.map { "${it.first}  ${it.second}" }
         b.spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
     }
