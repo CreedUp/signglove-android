@@ -18,6 +18,8 @@ import com.signglove.databinding.ActivityMainBinding
 import java.util.Locale
 import kotlin.random.Random
 
+private data class DemoScriptItem(val words: String, val sentence: String)
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
@@ -65,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.3"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.4"
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale.CHINA }
 
         composer = SentenceComposer(settings,
@@ -96,6 +98,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun wireControls() {
         b.btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
+        b.swDemoScript.text = settings.demoButtonText
 
         b.btnConnect.setOnClickListener {
             if (connected) { bt.disconnect() }
@@ -117,8 +120,8 @@ class MainActivity : AppCompatActivity() {
             demoScriptStarted = false
             clearDemoScript()
             if (on) {
-                if (demoSegments().isEmpty()) {
-                    toast("请先在设置里填写演示文字")
+                if (demoScriptItems().isEmpty()) {
+                    toast("请先在设置里填写演示脚本")
                     b.swDemoScript.isChecked = false
                     return@setOnCheckedChangeListener
                 }
@@ -151,26 +154,41 @@ class MainActivity : AppCompatActivity() {
         GestureMap.word(name)?.let { composer.feed(it) }
     }
 
-    private fun demoSegments(): List<String> =
-        settings.demoText.lines().map { it.trim() }.filter { it.isNotEmpty() }
+    private fun demoScriptItems(): List<DemoScriptItem> =
+        settings.demoText.lines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { line ->
+                val parts = line.split("=>", limit = 2)
+                if (parts.size == 2) {
+                    DemoScriptItem(parts[0].trim(), parts[1].trim())
+                } else {
+                    DemoScriptItem(line, line)
+                }
+            }
+            .filter { it.words.isNotEmpty() && it.sentence.isNotEmpty() }
 
     private fun startDemoScript() {
-        val segments = demoSegments()
-        if (segments.isEmpty()) return
+        val items = demoScriptItems()
+        if (items.isEmpty()) return
         demoScriptStarted = true
         clearDemoScript()
         b.tvStatus.text = "演示脚本: 已启动"
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
-        segments.forEachIndexed { index, text ->
+        items.forEachIndexed { index, item ->
             val r = Runnable {
                 if (!demoScriptEnabled) return@Runnable
-                onSentence(text, "script")
-                b.tvStatus.text = if (index == segments.lastIndex) "演示脚本: 已完成" else "演示脚本: ${index + 1}/${segments.size}"
-                if (index == segments.lastIndex) {
-                    demoScriptEnabled = false
-                    b.swDemoScript.isChecked = false
-                }
+                showDemoWords(item.words)
+                main.postDelayed({
+                    if (!demoScriptEnabled) return@postDelayed
+                    onSentence(item.sentence, "script")
+                    b.tvStatus.text = if (index == items.lastIndex) "演示脚本: 已完成" else "演示脚本: ${index + 1}/${items.size}"
+                    if (index == items.lastIndex) {
+                        demoScriptEnabled = false
+                        main.postDelayed({ b.swDemoScript.isChecked = false }, 150L)
+                    }
+                }, 500L)
             }
             demoScriptRuns.add(r)
             main.postDelayed(r, delayMs)
@@ -181,6 +199,13 @@ class MainActivity : AppCompatActivity() {
     private fun clearDemoScript() {
         demoScriptRuns.forEach { main.removeCallbacks(it) }
         demoScriptRuns.clear()
+    }
+
+    private fun showDemoWords(words: String) {
+        flow.clear()
+        flow.append(words)
+        b.tvFlow.text = "手势词: $flow"
+        b.tvStatus.text = "… 组句中"
     }
 
     private fun onSentence(text: String, src: String) {
@@ -262,7 +287,11 @@ class MainActivity : AppCompatActivity() {
         b.spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
     }
 
-    override fun onResume() { super.onResume(); if (hasBt()) refreshDevices() }
+    override fun onResume() {
+        super.onResume()
+        b.swDemoScript.text = settings.demoButtonText
+        if (hasBt()) refreshDevices()
+    }
 
     override fun onDestroy() {
         bt.disconnect(); vitals.stopSim(); simRunning = false; clearDemoScript()

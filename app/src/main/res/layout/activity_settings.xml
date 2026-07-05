@@ -56,6 +56,11 @@
             android:textColor="@color/txt" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="主页演示开关名称" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etDemoButtonText" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="演示输出脚本" android:inputType="text" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp" android:text="首段延迟秒数" android:textColor="@color/txt" />
         <EditText android:id="@+id/etDemoFirstDelay" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="1.0" android:inputType="numberDecimal" android:textSize="14sp" />
@@ -66,10 +71,10 @@
             android:hint="2.0" android:inputType="numberDecimal" android:textSize="14sp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:text="预设输出文字（每行一段）" android:textColor="@color/txt" />
+            android:layout_marginTop="12dp" android:text="演示脚本（每行一段）" android:textColor="@color/txt" />
         <EditText android:id="@+id/etDemoText" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:gravity="top"
-            android:hint="你好&#10;请问需要帮助吗&#10;谢谢"
+            android:hint="我 你好 =&gt; 你好，我需要帮助&#10;谢谢 =&gt; 谢谢你&#10;我肚子饿了想吃饭"
             android:inputType="textMultiLine"
             android:minLines="4"
             android:textSize="14sp" />
@@ -79,7 +84,7 @@
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="密钥仅存本机，请勿外传。\nServer酱: sct.ftqq.com 扫码拿 SendKey 并绑定方糖服务号。\n企业微信: 建群→群机器人→复制 Webhook，家人拉进群即可收到。\n演示输出: 打开主界面“演示输出脚本”后生效。"
+            android:text="密钥仅存本机，请勿外传。\nServer酱: sct.ftqq.com 扫码拿 SendKey 并绑定方糖服务号。\n企业微信: 建群→群机器人→复制 Webhook，家人拉进群即可收到。\n演示脚本格式: 手势词 =&gt; 组句结果；不写 =&gt; 时整行既作为手势词也作为组句结果。"
             android:textColor="@color/mut" android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

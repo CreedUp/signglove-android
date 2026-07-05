@@ -43,6 +43,10 @@ class Settings(ctx: Context) {
         get() = sp.getString("demo_text", "") ?: ""
         set(v) { sp.edit().putString("demo_text", v).apply() }
 
+    var demoButtonText: String
+        get() = sp.getString("demo_button_text", "演示输出脚本") ?: "演示输出脚本"
+        set(v) { sp.edit().putString("demo_button_text", v).apply() }
+
     var demoFirstDelaySec: Float
         get() = sp.getFloat("demo_first_delay_sec", 1.0f)
         set(v) { sp.edit().putFloat("demo_first_delay_sec", v).apply() }

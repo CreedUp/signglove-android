@@ -25,6 +25,7 @@ class SettingsActivity : AppCompatActivity() {
         b.etDsKey.setText(settings.deepseekKey)
         b.etPause.setText(settings.pauseSec.toString())
         b.swDemoWaitGesture.isChecked = settings.demoWaitForGesture
+        b.etDemoButtonText.setText(settings.demoButtonText)
         b.etDemoFirstDelay.setText(settings.demoFirstDelaySec.toString())
         b.etDemoInterval.setText(settings.demoIntervalSec.toString())
         b.etDemoText.setText(settings.demoText)
@@ -36,6 +37,7 @@ class SettingsActivity : AppCompatActivity() {
             settings.deepseekKey = b.etDsKey.text.toString().trim()
             settings.pauseSec = b.etPause.text.toString().trim().toFloatOrNull() ?: 2.5f
             settings.demoWaitForGesture = b.swDemoWaitGesture.isChecked
+            settings.demoButtonText = b.etDemoButtonText.text.toString().trim().ifBlank { "演示输出脚本" }
             settings.demoFirstDelaySec = (b.etDemoFirstDelay.text.toString().trim().toFloatOrNull() ?: 1.0f).coerceAtLeast(0f)
             settings.demoIntervalSec = (b.etDemoInterval.text.toString().trim().toFloatOrNull() ?: 2.0f).coerceAtLeast(0f)
             settings.demoText = b.etDemoText.text.toString().trim()
