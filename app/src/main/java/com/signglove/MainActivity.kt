@@ -34,6 +34,9 @@ class MainActivity : AppCompatActivity() {
     private val history = StringBuilder()
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
+    private var demoScriptEnabled = false
+    private var demoScriptStarted = false
+    private val demoScriptRuns = mutableListOf<Runnable>()
 
     // 手势模拟: 发一组(2~4)词 → 停顿(>pauseSec)触发组句 → 再发下一组
     private var simRunning = false
@@ -42,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private val simTick = object : Runnable {
         override fun run() {
             if (!simRunning) return
-            GestureMap.word(simNames[Random.nextInt(simNames.size)])?.let { composer.feed(it) }
+            handleGestureName(simNames[Random.nextInt(simNames.size)])
             simWordsLeft--
             if (simWordsLeft > 0) {
                 main.postDelayed(this, (600 + Random.nextInt(400)).toLong())  // 词间 0.6~1.0s
@@ -81,8 +84,7 @@ class MainActivity : AppCompatActivity() {
 
         bt = BluetoothBle(
             ctx = this,
-            onLine = { line -> GestureMap.parseGesture(line)?.let { name ->
-                GestureMap.word(name)?.let { composer.feed(it) } } },
+            onLine = { line -> GestureMap.parseGesture(line)?.let { name -> handleGestureName(name) } },
             onState = { c -> connected = c
                 b.tvBle.text = if (c) "蓝牙: 已连接" else "蓝牙: 未连接"
                 b.btnConnect.text = if (c) "⏏ 断开" else "🔌 连接" })
@@ -110,6 +112,25 @@ class MainActivity : AppCompatActivity() {
             if (on) { simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
             else main.removeCallbacks(simTick)
         }
+        b.swDemoScript.setOnCheckedChangeListener { _, on ->
+            demoScriptEnabled = on
+            demoScriptStarted = false
+            clearDemoScript()
+            if (on) {
+                if (demoSegments().isEmpty()) {
+                    toast("请先在设置里填写演示文字")
+                    b.swDemoScript.isChecked = false
+                    return@setOnCheckedChangeListener
+                }
+                if (settings.demoWaitForGesture) {
+                    b.tvStatus.text = "演示脚本: 等待第一个动作"
+                } else {
+                    startDemoScript()
+                }
+            } else {
+                b.tvStatus.text = ""
+            }
+        }
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
             toast("自动报警 " + if (on) "开" else "关") }
@@ -124,6 +145,44 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleGestureName(name: String) {
+        if (demoScriptEnabled && settings.demoWaitForGesture && !demoScriptStarted) startDemoScript()
+        if (demoScriptEnabled) return
+        GestureMap.word(name)?.let { composer.feed(it) }
+    }
+
+    private fun demoSegments(): List<String> =
+        settings.demoText.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+    private fun startDemoScript() {
+        val segments = demoSegments()
+        if (segments.isEmpty()) return
+        demoScriptStarted = true
+        clearDemoScript()
+        b.tvStatus.text = "演示脚本: 已启动"
+        var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
+        val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        segments.forEachIndexed { index, text ->
+            val r = Runnable {
+                if (!demoScriptEnabled) return@Runnable
+                onSentence(text, "script")
+                b.tvStatus.text = if (index == segments.lastIndex) "演示脚本: 已完成" else "演示脚本: ${index + 1}/${segments.size}"
+                if (index == segments.lastIndex) {
+                    demoScriptEnabled = false
+                    b.swDemoScript.isChecked = false
+                }
+            }
+            demoScriptRuns.add(r)
+            main.postDelayed(r, delayMs)
+            delayMs += intervalMs
+        }
+    }
+
+    private fun clearDemoScript() {
+        demoScriptRuns.forEach { main.removeCallbacks(it) }
+        demoScriptRuns.clear()
+    }
+
     private fun onSentence(text: String, src: String) {
         b.tvGesture.text = text      // 句子持久展示在大字区
         b.tvStatus.text = ""         // 清"组句中"状态
@@ -135,6 +194,7 @@ class MainActivity : AppCompatActivity() {
             "local" -> "[直拼·未配Key]"
             "fallback" -> "[回退·DeepSeek失败]"
             "demo" -> "[演示]"
+            "script" -> "[脚本演示]"
             else -> ""
         }
         history.insert(0, "• $text  $tag\n")
@@ -205,7 +265,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); if (hasBt()) refreshDevices() }
 
     override fun onDestroy() {
-        bt.disconnect(); vitals.stopSim(); simRunning = false
+        bt.disconnect(); vitals.stopSim(); simRunning = false; clearDemoScript()
         tts?.shutdown()
         super.onDestroy()
     }

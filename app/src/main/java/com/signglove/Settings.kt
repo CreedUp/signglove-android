@@ -38,4 +38,20 @@ class Settings(ctx: Context) {
     var autoSos: Boolean
         get() = sp.getBoolean("auto_sos", true)
         set(v) { sp.edit().putBoolean("auto_sos", v).apply() }
+
+    var demoText: String
+        get() = sp.getString("demo_text", "") ?: ""
+        set(v) { sp.edit().putString("demo_text", v).apply() }
+
+    var demoFirstDelaySec: Float
+        get() = sp.getFloat("demo_first_delay_sec", 1.0f)
+        set(v) { sp.edit().putFloat("demo_first_delay_sec", v).apply() }
+
+    var demoIntervalSec: Float
+        get() = sp.getFloat("demo_interval_sec", 2.0f)
+        set(v) { sp.edit().putFloat("demo_interval_sec", v).apply() }
+
+    var demoWaitForGesture: Boolean
+        get() = sp.getBoolean("demo_wait_for_gesture", true)
+        set(v) { sp.edit().putBoolean("demo_wait_for_gesture", v).apply() }
 }

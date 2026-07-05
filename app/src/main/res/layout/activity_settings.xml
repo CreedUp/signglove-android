@@ -43,12 +43,43 @@
         <EditText android:id="@+id/etPause" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="2.5" android:inputType="numberDecimal" android:textSize="14sp" />
 
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="22dp" android:text="演示输出" android:textColor="@color/txt"
+            android:textSize="16sp" android:textStyle="bold" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swDemoWaitGesture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="接收到第一个动作后开始输出"
+            android:textColor="@color/txt" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="首段延迟秒数" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etDemoFirstDelay" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="1.0" android:inputType="numberDecimal" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="多段文字间隔秒数" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etDemoInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="2.0" android:inputType="numberDecimal" android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="预设输出文字（每行一段）" android:textColor="@color/txt" />
+        <EditText android:id="@+id/etDemoText" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="top"
+            android:hint="你好&#10;请问需要帮助吗&#10;谢谢"
+            android:inputType="textMultiLine"
+            android:minLines="4"
+            android:textSize="14sp" />
+
         <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="22dp" android:text="💾 保存设置" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="密钥仅存本机，请勿外传。\nServer酱: sct.ftqq.com 扫码拿 SendKey 并绑定方糖服务号。\n企业微信: 建群→群机器人→复制 Webhook，家人拉进群即可收到。"
+            android:text="密钥仅存本机，请勿外传。\nServer酱: sct.ftqq.com 扫码拿 SendKey 并绑定方糖服务号。\n企业微信: 建群→群机器人→复制 Webhook，家人拉进群即可收到。\n演示输出: 打开主界面“演示输出脚本”后生效。"
             android:textColor="@color/mut" android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

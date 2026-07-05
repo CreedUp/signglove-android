@@ -162,6 +162,14 @@
                     android:textColor="@color/txt" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swDemoScript"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="演示输出脚本"
+                    android:textColor="@color/txt" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/swAutoSos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
