@@ -28,6 +28,8 @@ class SettingsActivity : AppCompatActivity() {
         b.etDemoButtonText.setText(settings.demoButtonText)
         b.etDemoFirstDelay.setText(settings.demoFirstDelaySec.toString())
         b.etDemoInterval.setText(settings.demoIntervalSec.toString())
+        b.etDemoWordInterval.setText(settings.demoWordIntervalSec.toString())
+        b.etDemoComposeDelay.setText(settings.demoComposeDelaySec.toString())
         b.etDemoText.setText(settings.demoText)
 
         b.btnSave.setOnClickListener {
@@ -40,6 +42,8 @@ class SettingsActivity : AppCompatActivity() {
             settings.demoButtonText = b.etDemoButtonText.text.toString().trim().ifBlank { "演示输出脚本" }
             settings.demoFirstDelaySec = (b.etDemoFirstDelay.text.toString().trim().toFloatOrNull() ?: 1.0f).coerceAtLeast(0f)
             settings.demoIntervalSec = (b.etDemoInterval.text.toString().trim().toFloatOrNull() ?: 2.0f).coerceAtLeast(0f)
+            settings.demoWordIntervalSec = (b.etDemoWordInterval.text.toString().trim().toFloatOrNull() ?: 0.6f).coerceAtLeast(0f)
+            settings.demoComposeDelaySec = (b.etDemoComposeDelay.text.toString().trim().toFloatOrNull() ?: 0.8f).coerceAtLeast(0f)
             settings.demoText = b.etDemoText.text.toString().trim()
             Toast.makeText(this, "✓ 设置已保存", Toast.LENGTH_SHORT).show()
             finish()

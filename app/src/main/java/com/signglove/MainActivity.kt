@@ -121,12 +121,11 @@ class MainActivity : AppCompatActivity() {
             clearDemoScript()
             if (on) {
                 if (demoScriptItems().isEmpty()) {
-                    toast("请先在设置里填写演示脚本")
                     b.swDemoScript.isChecked = false
                     return@setOnCheckedChangeListener
                 }
                 if (settings.demoWaitForGesture) {
-                    b.tvStatus.text = "演示脚本: 等待第一个动作"
+                    b.tvStatus.text = ""
                 } else {
                     startDemoScript()
                 }
@@ -173,26 +172,18 @@ class MainActivity : AppCompatActivity() {
         if (items.isEmpty()) return
         demoScriptStarted = true
         clearDemoScript()
-        b.tvStatus.text = "演示脚本: 已启动"
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
         items.forEachIndexed { index, item ->
             val r = Runnable {
                 if (!demoScriptEnabled) return@Runnable
-                showDemoWords(item.words)
-                main.postDelayed({
-                    if (!demoScriptEnabled) return@postDelayed
-                    onSentence(item.sentence, "script")
-                    b.tvStatus.text = if (index == items.lastIndex) "演示脚本: 已完成" else "演示脚本: ${index + 1}/${items.size}"
-                    if (index == items.lastIndex) {
-                        demoScriptEnabled = false
-                        main.postDelayed({ b.swDemoScript.isChecked = false }, 150L)
-                    }
-                }, 500L)
+                showDemoItem(item, index == items.lastIndex)
             }
             demoScriptRuns.add(r)
             main.postDelayed(r, delayMs)
-            delayMs += intervalMs
+            delayMs += demoItemDurationMs(item, wordIntervalMs, composeDelayMs) + intervalMs
         }
     }
 
@@ -201,11 +192,41 @@ class MainActivity : AppCompatActivity() {
         demoScriptRuns.clear()
     }
 
-    private fun showDemoWords(words: String) {
+    private fun showDemoItem(item: DemoScriptItem, isLast: Boolean) {
         flow.clear()
-        flow.append(words)
-        b.tvFlow.text = "手势词: $flow"
-        b.tvStatus.text = "… 组句中"
+        val words = item.words.split(Regex("\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
+        var delayMs = 0L
+
+        words.forEach { word ->
+            val r = Runnable {
+                if (!demoScriptEnabled) return@Runnable
+                flow.append(if (flow.isEmpty()) "" else " ").append(word)
+                b.tvFlow.text = "手势词: $flow"
+                b.tvStatus.text = "… 组句中"
+            }
+            demoScriptRuns.add(r)
+            main.postDelayed(r, delayMs)
+            delayMs += wordIntervalMs
+        }
+
+        val sentenceRun = Runnable {
+            if (!demoScriptEnabled) return@Runnable
+            onSentence(item.sentence, "script")
+            if (isLast) {
+                demoScriptEnabled = false
+                main.postDelayed({ b.swDemoScript.isChecked = false }, 150L)
+            }
+        }
+        demoScriptRuns.add(sentenceRun)
+        main.postDelayed(sentenceRun, demoItemDurationMs(item, wordIntervalMs, composeDelayMs))
+    }
+
+    private fun demoItemDurationMs(item: DemoScriptItem, wordIntervalMs: Long, composeDelayMs: Long): Long {
+        val wordCount = item.words.split(Regex("\\s+")).count { it.trim().isNotEmpty() }
+        val lastWordAt = if (wordCount <= 1) 0L else (wordCount - 1L) * wordIntervalMs
+        return lastWordAt + composeDelayMs
     }
 
     private fun onSentence(text: String, src: String) {
@@ -219,7 +240,6 @@ class MainActivity : AppCompatActivity() {
             "local" -> "[直拼·未配Key]"
             "fallback" -> "[回退·DeepSeek失败]"
             "demo" -> "[演示]"
-            "script" -> "[脚本演示]"
             else -> ""
         }
         history.insert(0, "• $text  $tag\n")

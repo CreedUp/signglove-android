@@ -55,6 +55,14 @@ class Settings(ctx: Context) {
         get() = sp.getFloat("demo_interval_sec", 2.0f)
         set(v) { sp.edit().putFloat("demo_interval_sec", v).apply() }
 
+    var demoWordIntervalSec: Float
+        get() = sp.getFloat("demo_word_interval_sec", 0.6f)
+        set(v) { sp.edit().putFloat("demo_word_interval_sec", v).apply() }
+
+    var demoComposeDelaySec: Float
+        get() = sp.getFloat("demo_compose_delay_sec", 0.8f)
+        set(v) { sp.edit().putFloat("demo_compose_delay_sec", v).apply() }
+
     var demoWaitForGesture: Boolean
         get() = sp.getBoolean("demo_wait_for_gesture", true)
         set(v) { sp.edit().putBoolean("demo_wait_for_gesture", v).apply() }
