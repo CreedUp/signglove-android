@@ -170,6 +170,7 @@ class MainActivity : AppCompatActivity() {
         clearDemoScript()
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val intervalOverridesMs = demoIntervalOverridesMs()
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
         items.forEachIndexed { index, item ->
@@ -179,9 +180,18 @@ class MainActivity : AppCompatActivity() {
             }
             demoScriptRuns.add(r)
             main.postDelayed(r, delayMs)
-            delayMs += demoItemDurationMs(item, wordIntervalMs, composeDelayMs) + intervalMs
+            delayMs += demoItemDurationMs(item, wordIntervalMs, composeDelayMs)
+            if (index < items.lastIndex) {
+                delayMs += intervalOverridesMs.getOrNull(index) ?: intervalMs
+            }
         }
     }
+
+    private fun demoIntervalOverridesMs(): List<Long> =
+        settings.demoIntervalsText
+            .split(Regex("[,，;；\\s]+"))
+            .mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() }?.toFloatOrNull() }
+            .map { (it * 1000).toLong().coerceAtLeast(0L) }
 
     private fun clearDemoScript() {
         demoScriptRuns.forEach { main.removeCallbacks(it) }
