@@ -47,6 +47,10 @@ class Settings(ctx: Context) {
         get() = sp.getString("demo_button_text", "演示输出脚本") ?: "演示输出脚本"
         set(v) { sp.edit().putString("demo_button_text", v).apply() }
 
+    var demoWaitForGesture: Boolean
+        get() = sp.getBoolean("demo_wait_for_gesture", true)
+        set(v) { sp.edit().putBoolean("demo_wait_for_gesture", v).apply() }
+
     var demoFirstDelaySec: Float
         get() = sp.getFloat("demo_first_delay_sec", 1.0f)
         set(v) { sp.edit().putFloat("demo_first_delay_sec", v).apply() }

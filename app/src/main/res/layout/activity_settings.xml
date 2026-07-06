@@ -56,6 +56,14 @@
                 android:layout_marginTop="22dp" android:text="演示输出" android:textColor="@color/txt"
                 android:textSize="16sp" android:textStyle="bold" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swDemoWaitGesture"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="接收到第一个动作后开始输出"
+                android:textColor="@color/txt" />
+
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" android:text="主页演示文字" android:textColor="@color/txt" />
             <EditText android:id="@+id/etDemoButtonText" android:layout_width="match_parent" android:layout_height="wrap_content"

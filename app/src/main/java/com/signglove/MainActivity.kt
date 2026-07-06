@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
     private var demoScriptEnabled = false
+    private var demoScriptStarted = false
     private val demoScriptRuns = mutableListOf<Runnable>()
 
     // 手势模拟: 发一组(2~4)词 → 停顿(>pauseSec)触发组句 → 再发下一组
@@ -127,8 +128,9 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             demoScriptEnabled = true
+            demoScriptStarted = false
             showWaitingGesture()
-            startDemoScript()
+            if (!settings.demoWaitForGesture) startDemoScript()
         }
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
@@ -150,6 +152,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGestureName(name: String) {
+        if (demoScriptEnabled && settings.demoWaitForGesture && !demoScriptStarted) {
+            startDemoScript()
+            return
+        }
         if (demoScriptEnabled) return
         GestureMap.word(name)?.let { composer.feed(it) }
     }
@@ -171,6 +177,7 @@ class MainActivity : AppCompatActivity() {
     private fun startDemoScript() {
         val items = demoScriptItems()
         if (items.isEmpty()) return
+        demoScriptStarted = true
         clearDemoScript()
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
@@ -213,6 +220,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun runSingleDemoItem(item: DemoScriptItem) {
         demoScriptEnabled = true
+        demoScriptStarted = true
         clearDemoScript()
         showWaitingGesture()
         val r = Runnable {
