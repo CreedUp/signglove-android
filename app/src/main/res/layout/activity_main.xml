@@ -69,9 +69,6 @@
                 <TextView android:id="@+id/tvTemp" android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:gravity="center" android:text="🌡️\n--\n℃"
                     android:textColor="@color/txt" android:textSize="14sp" />
-                <TextView android:id="@+id/tvGsr" android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:gravity="center" android:text="⚡\n--\nμS"
-                    android:textColor="@color/txt" android:textSize="14sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -162,14 +159,6 @@
                     android:textColor="@color/txt" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swDemoScript"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="演示输出脚本"
-                    android:textColor="@color/txt" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/swAutoSos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -177,6 +166,20 @@
                     android:checked="true"
                     android:text="🆘 生命体征异常自动报警"
                     android:textColor="@color/txt" />
+
+                <TextView
+                    android:id="@+id/tvDemoScript"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:minHeight="48dp"
+                    android:gravity="center_vertical"
+                    android:text="演示输出脚本"
+                    android:textColor="@color/txt"
+                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/btnSosTest"

@@ -5,10 +5,10 @@ import android.os.Looper
 import kotlin.random.Random
 
 /** 一组生命体征读数。 */
-data class VitalsData(val hr: Int, val spo2: Int, val temp: Double, val gsr: Double)
+data class VitalsData(val hr: Int, val spo2: Int, val temp: Double)
 
 /**
- * 生命体征: 现为模拟数据(同 PC), 真实 MAX30102/GSR 接入后替换 feed()。
+ * 生命体征: 现为模拟数据(同 PC), 真实 MAX30102 接入后替换 feed()。
  * 内置异常检测: 危险阈值连续 dangerStreakNeed 拍命中 → onDanger(原因)。
  */
 class Vitals(
@@ -26,8 +26,7 @@ class Vitals(
             val v = VitalsData(
                 hr = 66 + Random.nextInt(14),
                 spo2 = 96 + Random.nextInt(4),
-                temp = (363 + Random.nextInt(8)) / 10.0,
-                gsr = (25 + Random.nextInt(50)) / 10.0
+                temp = (363 + Random.nextInt(8)) / 10.0
             )
             feed(v)
             main.postDelayed(this, 2200)
@@ -63,7 +62,7 @@ class Vitals(
 
     /** 一次性注入危险读数 3 拍(测试报警链路用)。 */
     fun injectDanger() {
-        val d = VitalsData(hr = 138, spo2 = 86, temp = 39.1, gsr = 15.0)
+        val d = VitalsData(hr = 138, spo2 = 86, temp = 39.1)
         repeat(dangerStreakNeed) { feed(d) }
     }
 
@@ -73,7 +72,6 @@ class Vitals(
         if (v.hr < 45 || v.hr > 130) bad.add("心率${v.hr}BPM")
         if (v.spo2 < 90) bad.add("血氧${v.spo2}%")
         if (v.temp >= 38.5 || v.temp < 35) bad.add("体温${v.temp}℃")
-        if (v.gsr > 13) bad.add("皮肤电导${v.gsr}μS")
         return if (bad.isEmpty()) null else bad.joinToString("、")
     }
 }

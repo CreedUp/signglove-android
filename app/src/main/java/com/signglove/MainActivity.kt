@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity() {
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
     private var demoScriptEnabled = false
-    private var demoScriptStarted = false
     private val demoScriptRuns = mutableListOf<Runnable>()
 
     // 手势模拟: 发一组(2~4)词 → 停顿(>pauseSec)触发组句 → 再发下一组
@@ -100,7 +99,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun wireControls() {
         b.btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
-        b.swDemoScript.text = settings.demoButtonText
+        b.tvDemoScript.text = settings.demoButtonText
 
         b.btnConnect.setOnClickListener {
             if (connected) { bt.disconnect() }
@@ -117,24 +116,15 @@ class MainActivity : AppCompatActivity() {
             if (on) { showWaitingGesture(); simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
             else main.removeCallbacks(simTick)
         }
-        b.swDemoScript.setOnCheckedChangeListener { _, on ->
-            demoScriptEnabled = on
-            demoScriptStarted = false
+        b.tvDemoScript.setOnClickListener {
             clearDemoScript()
-            if (on) {
-                if (demoScriptItems().isEmpty()) {
-                    b.swDemoScript.isChecked = false
-                    return@setOnCheckedChangeListener
-                }
-                showWaitingGesture()
-                if (settings.demoWaitForGesture) {
-                    b.tvStatus.text = ""
-                } else {
-                    startDemoScript()
-                }
-            } else {
-                b.tvStatus.text = ""
+            if (demoScriptItems().isEmpty()) {
+                toast("请先在设置里填写演示脚本")
+                return@setOnClickListener
             }
+            demoScriptEnabled = true
+            showWaitingGesture()
+            startDemoScript()
         }
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
@@ -156,7 +146,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGestureName(name: String) {
-        if (demoScriptEnabled && settings.demoWaitForGesture && !demoScriptStarted) startDemoScript()
         if (demoScriptEnabled) return
         GestureMap.word(name)?.let { composer.feed(it) }
     }
@@ -178,7 +167,6 @@ class MainActivity : AppCompatActivity() {
     private fun startDemoScript() {
         val items = demoScriptItems()
         if (items.isEmpty()) return
-        demoScriptStarted = true
         clearDemoScript()
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
@@ -209,7 +197,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun runSingleDemoItem(item: DemoScriptItem) {
         demoScriptEnabled = true
-        demoScriptStarted = true
         clearDemoScript()
         showWaitingGesture()
         val r = Runnable {
@@ -244,7 +231,6 @@ class MainActivity : AppCompatActivity() {
             onSentence(item.sentence, "script")
             if (isLast) {
                 demoScriptEnabled = false
-                main.postDelayed({ b.swDemoScript.isChecked = false }, 150L)
             }
         }
         demoScriptRuns.add(sentenceRun)
@@ -279,7 +265,6 @@ class MainActivity : AppCompatActivity() {
         b.tvHr.text = "❤️\n${v.hr}\nBPM"
         b.tvSpo2.text = "🩸\n${v.spo2}\n%"
         b.tvTemp.text = "🌡️\n${v.temp}\n℃"
-        b.tvGsr.text = "⚡\n${v.gsr}\nμS"
     }
 
     private fun updateCountdown(sec: Int, reason: String) {
@@ -379,7 +364,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        b.swDemoScript.text = settings.demoButtonText
+        b.tvDemoScript.text = settings.demoButtonText
         if (hasBt()) refreshDevices()
     }
 

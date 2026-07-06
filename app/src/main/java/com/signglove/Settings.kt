@@ -63,7 +63,4 @@ class Settings(ctx: Context) {
         get() = sp.getFloat("demo_compose_delay_sec", 0.8f)
         set(v) { sp.edit().putFloat("demo_compose_delay_sec", v).apply() }
 
-    var demoWaitForGesture: Boolean
-        get() = sp.getBoolean("demo_wait_for_gesture", true)
-        set(v) { sp.edit().putBoolean("demo_wait_for_gesture", v).apply() }
 }

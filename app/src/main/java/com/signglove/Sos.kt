@@ -81,7 +81,7 @@ class Sos(
         sb.append("时间: $ts\n")
         sb.append("原因: $reason\n")
         vitals?.let {
-            sb.append("心率: ${it.hr} BPM\n血氧: ${it.spo2} %\n体温: ${it.temp} ℃\n皮肤电导: ${it.gsr} μS\n")
+            sb.append("心率: ${it.hr} BPM\n血氧: ${it.spo2} %\n体温: ${it.temp} ℃\n")
         }
         sb.append(mapLine)
         return sb.toString()
