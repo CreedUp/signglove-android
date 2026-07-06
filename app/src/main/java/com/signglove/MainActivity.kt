@@ -9,6 +9,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var ttsWarned = false
+    private var zoomed = false
 
     private var deviceMacs = listOf<String>()
     private var connected = false
@@ -102,6 +106,7 @@ class MainActivity : AppCompatActivity() {
     private fun wireControls() {
         b.btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
         b.tvDemoScript.text = settings.demoButtonText
+        b.tvZoom.setOnClickListener { setZoomed(!zoomed) }
 
         b.btnConnect.setOnClickListener {
             if (connected) { bt.disconnect() }
@@ -308,6 +313,50 @@ class MainActivity : AppCompatActivity() {
         b.tvHr.text = "❤️\n--\nBPM"
         b.tvSpo2.text = "🩸\n--\n%"
         b.tvTemp.text = "🌡️\n--\n℃"
+    }
+
+    private fun setZoomed(on: Boolean) {
+        zoomed = on
+        val scale = if (on) 1.25f else 1.0f
+        b.mainContent.pivotX = 0f
+        b.mainContent.pivotY = 0f
+        b.mainContent.scaleX = scale
+        b.mainContent.scaleY = scale
+        b.mainContent.setPadding(
+            if (on) 8 else 16,
+            if (on) 8 else 16,
+            if (on) 8 else 16,
+            if (on) 8 else 16
+        )
+        b.tvZoom.text = if (on) "恢复显示" else "整体放大"
+        if (on) enterFullscreen() else exitFullscreen()
+        b.mainScroll.post { b.mainScroll.smoothScrollTo(0, 0) }
+    }
+
+    private fun enterFullscreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            window.insetsController?.systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        }
+    }
+
+    private fun exitFullscreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        }
     }
 
     private fun updateCountdown(sec: Int, reason: String) {
