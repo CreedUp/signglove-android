@@ -90,9 +90,11 @@ class MainActivity : AppCompatActivity() {
             onLine = { line -> GestureMap.parseGesture(line)?.let { name -> handleGestureName(name) } },
             onState = { c -> connected = c
                 b.tvBle.text = if (c) "蓝牙: 已连接" else "蓝牙: 未连接"
-                b.btnConnect.text = if (c) "⏏ 断开" else "🔌 连接" })
+                b.btnConnect.text = if (c) "⏏ 断开" else "🔌 连接"
+                updateVitalsConnectionState() })
 
         wireControls()
+        updateVitalsConnectionState()
         requestPerms()
         vitals.startSim()   // 生命体征模拟(同 PC)
     }
@@ -272,9 +274,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showVitals(v: VitalsData) {
+        if (!connected) {
+            showVitalsPlaceholder()
+            return
+        }
         b.tvHr.text = "❤️\n${v.hr}\nBPM"
         b.tvSpo2.text = "🩸\n${v.spo2}\n%"
         b.tvTemp.text = "🌡️\n${v.temp}\n℃"
+    }
+
+    private fun updateVitalsConnectionState() {
+        if (!connected) showVitalsPlaceholder()
+    }
+
+    private fun showVitalsPlaceholder() {
+        b.tvHr.text = "❤️\n--\nBPM"
+        b.tvSpo2.text = "🩸\n--\n%"
+        b.tvTemp.text = "🌡️\n--\n℃"
     }
 
     private fun updateCountdown(sec: Int, reason: String) {
