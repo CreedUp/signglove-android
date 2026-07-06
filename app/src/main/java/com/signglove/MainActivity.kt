@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
 
         b.swSim.setOnCheckedChangeListener { _, on ->
             simRunning = on
-            if (on) { simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
+            if (on) { showWaitingGesture(); simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
             else main.removeCallbacks(simTick)
         }
         b.swDemoScript.setOnCheckedChangeListener { _, on ->
@@ -124,6 +124,7 @@ class MainActivity : AppCompatActivity() {
                     b.swDemoScript.isChecked = false
                     return@setOnCheckedChangeListener
                 }
+                showWaitingGesture()
                 if (settings.demoWaitForGesture) {
                     b.tvStatus.text = ""
                 } else {
@@ -142,8 +143,13 @@ class MainActivity : AppCompatActivity() {
             toast("注入异常生命体征…"); vitals.injectDanger()
         }
         b.btnDemo.setOnClickListener {
-            val demo = listOf("你好", "谢谢", "请问需要帮助吗", "我肚子饿了想吃饭")
-            onSentence(demo[Random.nextInt(demo.size)], "demo")
+            val demo = listOf(
+                DemoScriptItem("你好", "你好"),
+                DemoScriptItem("谢谢", "谢谢"),
+                DemoScriptItem("请问 需要 帮助 吗", "请问需要帮助吗"),
+                DemoScriptItem("我 肚子 饿了 想 吃饭", "我肚子饿了想吃饭")
+            )
+            runSingleDemoItem(demo[Random.nextInt(demo.size)])
         }
     }
 
@@ -190,6 +196,26 @@ class MainActivity : AppCompatActivity() {
     private fun clearDemoScript() {
         demoScriptRuns.forEach { main.removeCallbacks(it) }
         demoScriptRuns.clear()
+    }
+
+    private fun showWaitingGesture() {
+        flow.clear()
+        b.tvGesture.text = "等待手势…"
+        b.tvStatus.text = ""
+        b.tvFlow.text = ""
+    }
+
+    private fun runSingleDemoItem(item: DemoScriptItem) {
+        demoScriptEnabled = true
+        demoScriptStarted = true
+        clearDemoScript()
+        showWaitingGesture()
+        val r = Runnable {
+            if (!demoScriptEnabled) return@Runnable
+            showDemoItem(item, isLast = true)
+        }
+        demoScriptRuns.add(r)
+        main.postDelayed(r, 500L)
     }
 
     private fun showDemoItem(item: DemoScriptItem, isLast: Boolean) {
@@ -240,6 +266,7 @@ class MainActivity : AppCompatActivity() {
             "local" -> "[直拼·未配Key]"
             "fallback" -> "[回退·DeepSeek失败]"
             "demo" -> "[演示]"
+            "script" -> "[演示]"
             else -> ""
         }
         history.insert(0, "• $text  $tag\n")
