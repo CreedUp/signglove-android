@@ -172,7 +172,6 @@ class MainActivity : AppCompatActivity() {
         clearDemoScript()
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
-        val intervalOverridesMs = demoIntervalOverridesMs()
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
@@ -185,13 +184,10 @@ class MainActivity : AppCompatActivity() {
             main.postDelayed(r, delayMs)
             delayMs += demoItemDurationMs(item, wordIntervalMs, wordIntervalOverridesMs, composeDelayMs)
             if (index < items.lastIndex) {
-                delayMs += intervalOverridesMs.getOrNull(index) ?: intervalMs
+                delayMs += intervalMs
             }
         }
     }
-
-    private fun demoIntervalOverridesMs(): List<Long> =
-        parseDelayOverridesMs(settings.demoIntervalsText)
 
     private fun demoWordIntervalOverridesMs(): List<Long> =
         parseDelayOverridesMs(settings.demoWordIntervalsText)

@@ -55,10 +55,6 @@ class Settings(ctx: Context) {
         get() = sp.getFloat("demo_interval_sec", 2.0f)
         set(v) { sp.edit().putFloat("demo_interval_sec", v).apply() }
 
-    var demoIntervalsText: String
-        get() = sp.getString("demo_intervals_text", "") ?: ""
-        set(v) { sp.edit().putString("demo_intervals_text", v).apply() }
-
     var demoWordIntervalSec: Float
         get() = sp.getFloat("demo_word_interval_sec", 0.6f)
         set(v) { sp.edit().putFloat("demo_word_interval_sec", v).apply() }
