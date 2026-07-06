@@ -32,6 +32,7 @@ class SettingsActivity : AppCompatActivity() {
         b.etDemoInterval.setText(settings.demoIntervalSec.toString())
         b.etDemoIntervals.setText(settings.demoIntervalsText)
         b.etDemoWordInterval.setText(settings.demoWordIntervalSec.toString())
+        b.etDemoWordIntervals.setText(settings.demoWordIntervalsText)
         b.etDemoComposeDelay.setText(settings.demoComposeDelaySec.toString())
         b.etDemoText.setText(settings.demoText)
 
@@ -49,6 +50,7 @@ class SettingsActivity : AppCompatActivity() {
             settings.demoIntervalSec = (b.etDemoInterval.text.toString().trim().toFloatOrNull() ?: 2.0f).coerceAtLeast(0f)
             settings.demoIntervalsText = b.etDemoIntervals.text.toString().trim()
             settings.demoWordIntervalSec = (b.etDemoWordInterval.text.toString().trim().toFloatOrNull() ?: 0.6f).coerceAtLeast(0f)
+            settings.demoWordIntervalsText = b.etDemoWordIntervals.text.toString().trim()
             settings.demoComposeDelaySec = (b.etDemoComposeDelay.text.toString().trim().toFloatOrNull() ?: 0.8f).coerceAtLeast(0f)
             settings.demoText = b.etDemoText.text.toString().trim()
             Toast.makeText(this, "✓ 设置已保存", Toast.LENGTH_SHORT).show()

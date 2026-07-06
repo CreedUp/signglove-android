@@ -174,6 +174,7 @@ class MainActivity : AppCompatActivity() {
         val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val intervalOverridesMs = demoIntervalOverridesMs()
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
         items.forEachIndexed { index, item ->
             val r = Runnable {
@@ -182,7 +183,7 @@ class MainActivity : AppCompatActivity() {
             }
             demoScriptRuns.add(r)
             main.postDelayed(r, delayMs)
-            delayMs += demoItemDurationMs(item, wordIntervalMs, composeDelayMs)
+            delayMs += demoItemDurationMs(item, wordIntervalMs, wordIntervalOverridesMs, composeDelayMs)
             if (index < items.lastIndex) {
                 delayMs += intervalOverridesMs.getOrNull(index) ?: intervalMs
             }
@@ -190,7 +191,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun demoIntervalOverridesMs(): List<Long> =
-        settings.demoIntervalsText
+        parseDelayOverridesMs(settings.demoIntervalsText)
+
+    private fun demoWordIntervalOverridesMs(): List<Long> =
+        parseDelayOverridesMs(settings.demoWordIntervalsText)
+
+    private fun parseDelayOverridesMs(text: String): List<Long> =
+        text
             .split(Regex("[,，;；\\s]+"))
             .mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() }?.toFloatOrNull() }
             .map { (it * 1000).toLong().coerceAtLeast(0L) }
@@ -223,10 +230,11 @@ class MainActivity : AppCompatActivity() {
         flow.clear()
         val words = item.words.split(Regex("\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
+        val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
         var delayMs = 0L
 
-        words.forEach { word ->
+        words.forEachIndexed { index, word ->
             val r = Runnable {
                 if (!demoScriptEnabled) return@Runnable
                 flow.append(if (flow.isEmpty()) "" else " ").append(word)
@@ -235,7 +243,9 @@ class MainActivity : AppCompatActivity() {
             }
             demoScriptRuns.add(r)
             main.postDelayed(r, delayMs)
-            delayMs += wordIntervalMs
+            if (index < words.lastIndex) {
+                delayMs += wordIntervalOverridesMs.getOrNull(index) ?: wordIntervalMs
+            }
         }
 
         val sentenceRun = Runnable {
@@ -246,12 +256,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
         demoScriptRuns.add(sentenceRun)
-        main.postDelayed(sentenceRun, demoItemDurationMs(item, wordIntervalMs, composeDelayMs))
+        main.postDelayed(sentenceRun, delayMs + composeDelayMs)
     }
 
-    private fun demoItemDurationMs(item: DemoScriptItem, wordIntervalMs: Long, composeDelayMs: Long): Long {
+    private fun demoItemDurationMs(
+        item: DemoScriptItem,
+        wordIntervalMs: Long,
+        wordIntervalOverridesMs: List<Long>,
+        composeDelayMs: Long
+    ): Long {
         val wordCount = item.words.split(Regex("\\s+")).count { it.trim().isNotEmpty() }
-        val lastWordAt = if (wordCount <= 1) 0L else (wordCount - 1L) * wordIntervalMs
+        val lastWordAt = (0 until (wordCount - 1)).sumOf { index ->
+            wordIntervalOverridesMs.getOrNull(index) ?: wordIntervalMs
+        }
         return lastWordAt + composeDelayMs
     }
 

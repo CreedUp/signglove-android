@@ -63,6 +63,10 @@ class Settings(ctx: Context) {
         get() = sp.getFloat("demo_word_interval_sec", 0.6f)
         set(v) { sp.edit().putFloat("demo_word_interval_sec", v).apply() }
 
+    var demoWordIntervalsText: String
+        get() = sp.getString("demo_word_intervals_text", "") ?: ""
+        set(v) { sp.edit().putString("demo_word_intervals_text", v).apply() }
+
     var demoComposeDelaySec: Float
         get() = sp.getFloat("demo_compose_delay_sec", 0.8f)
         set(v) { sp.edit().putFloat("demo_compose_delay_sec", v).apply() }
