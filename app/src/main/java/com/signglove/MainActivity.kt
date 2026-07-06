@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var vitals: Vitals
     private lateinit var sos: Sos
     private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var ttsWarned = false
 
     private var deviceMacs = listOf<String>()
     private var connected = false
@@ -68,7 +70,7 @@ class MainActivity : AppCompatActivity() {
 
         settings = Settings(this)
         b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.4"
-        tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale.CHINA }
+        initTts()
 
         composer = SentenceComposer(settings,
             onWord = { w -> flow.append(if (flow.isEmpty()) "" else " ").append(w)
@@ -300,8 +302,49 @@ class MainActivity : AppCompatActivity() {
         b.tvHistory.text = history.toString()
     }
 
+    private fun initTts() {
+        tts = TextToSpeech(this) { status ->
+            main.post {
+                val engine = tts
+                if (status != TextToSpeech.SUCCESS || engine == null) {
+                    ttsReady = false
+                    toastOnceForTts("语音播报初始化失败，请检查手机 TTS 引擎")
+                    return@post
+                }
+
+                val zh = engine.setLanguage(Locale.CHINA)
+                ttsReady = zh != TextToSpeech.LANG_MISSING_DATA && zh != TextToSpeech.LANG_NOT_SUPPORTED
+                if (!ttsReady) {
+                    val fallback = engine.setLanguage(Locale.getDefault())
+                    ttsReady = fallback != TextToSpeech.LANG_MISSING_DATA && fallback != TextToSpeech.LANG_NOT_SUPPORTED
+                    if (!ttsReady) {
+                        toastOnceForTts("手机未安装可用语音包，请在系统设置安装文字转语音引擎")
+                    } else {
+                        toastOnceForTts("未找到中文语音包，已使用系统默认语音")
+                    }
+                }
+            }
+        }
+    }
+
     private fun speak(text: String) {
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "u")
+        val engine = tts
+        if (engine == null) {
+            toastOnceForTts("语音播报尚未初始化")
+            return
+        }
+        if (!ttsReady) {
+            main.postDelayed({ if (ttsReady) speak(text) else toastOnceForTts("语音播报不可用，请检查手机 TTS 设置") }, 500L)
+            return
+        }
+        val result = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "signglove-tts")
+        if (result == TextToSpeech.ERROR) toastOnceForTts("语音播报失败，请检查媒体音量和 TTS 引擎")
+    }
+
+    private fun toastOnceForTts(message: String) {
+        if (ttsWarned) return
+        ttsWarned = true
+        toast(message)
     }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
