@@ -67,11 +67,6 @@
                 android:hint="1.0" android:inputType="numberDecimal" android:textSize="14sp" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="默认组词间隔秒数" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="2.0" android:inputType="numberDecimal" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" android:text="手势词显示间隔秒数" android:textColor="@color/txt" />
             <EditText android:id="@+id/etDemoWordInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:hint="0.6" android:inputType="numberDecimal" android:textSize="14sp" />

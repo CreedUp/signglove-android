@@ -20,6 +20,8 @@ import kotlin.random.Random
 
 private data class DemoScriptItem(val words: String, val sentence: String)
 
+private const val DEMO_ITEM_INTERVAL_MS = 2000L
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
@@ -171,7 +173,6 @@ class MainActivity : AppCompatActivity() {
         if (items.isEmpty()) return
         clearDemoScript()
         var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
-        val intervalMs = (settings.demoIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
@@ -184,7 +185,7 @@ class MainActivity : AppCompatActivity() {
             main.postDelayed(r, delayMs)
             delayMs += demoItemDurationMs(item, wordIntervalMs, wordIntervalOverridesMs, composeDelayMs)
             if (index < items.lastIndex) {
-                delayMs += intervalMs
+                delayMs += DEMO_ITEM_INTERVAL_MS
             }
         }
     }
