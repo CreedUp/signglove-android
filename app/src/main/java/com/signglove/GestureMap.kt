@@ -9,6 +9,10 @@ object GestureMap {
         "point" to "这个",
         "victory" to "需要",
         "ok" to "好的",
+        "help" to "帮助",
+        "sos" to "求救",
+        "rescue" to "求救",
+        "emergency" to "求救",
     )
 
     /** 解析一行: "GESTURE:fist" → "fist"; 容错纯文本也当手势名。 */

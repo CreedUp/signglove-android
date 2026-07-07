@@ -90,6 +90,11 @@
                 android:hint="0.8" android:inputType="numberDecimal" android:textSize="14sp" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:text="成句到下一组手势词间隔秒数" android:textColor="@color/txt" />
+            <EditText android:id="@+id/etDemoSentenceInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:hint="2.0" android:inputType="numberDecimal" android:textSize="14sp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" android:text="演示脚本（每行一段）" android:textColor="@color/txt" />
             <EditText android:id="@+id/etDemoText" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:gravity="top"

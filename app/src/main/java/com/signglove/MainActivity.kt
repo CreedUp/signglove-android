@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.view.KeyEvent
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,8 +20,6 @@ import java.util.Locale
 import kotlin.random.Random
 
 private data class DemoScriptItem(val words: String, val sentence: String)
-
-private const val DEMO_ITEM_INTERVAL_MS = 2000L
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val history = StringBuilder()
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
+    private var helpDialog: AlertDialog? = null
     private var demoScriptEnabled = false
     private var demoScriptStarted = false
     private val demoScriptRuns = mutableListOf<Runnable>()
@@ -157,7 +157,43 @@ class MainActivity : AppCompatActivity() {
             return
         }
         if (demoScriptEnabled) return
-        GestureMap.word(name)?.let { composer.feed(it) }
+        GestureMap.word(name)?.let { word ->
+            when (word) {
+                "求救" -> triggerGestureSosNow("手势词触发求救")
+                "帮助" -> showHelpSosPrompt()
+                else -> composer.feed(word)
+            }
+        }
+    }
+
+    private fun triggerGestureSosNow(reason: String) {
+        helpDialog?.dismiss()
+        helpDialog = null
+        flow.clear()
+        b.tvFlow.text = ""
+        b.tvGesture.text = "求救"
+        b.tvStatus.text = "正在触发紧急告警"
+        sos.triggerNow(reason, null)
+    }
+
+    private fun showHelpSosPrompt() {
+        if (helpDialog?.isShowing == true || sos.active || AlarmService.running) return
+        flow.clear()
+        b.tvFlow.text = ""
+        b.tvGesture.text = "帮助"
+        b.tvStatus.text = "等待确认是否告警"
+        helpDialog = AlertDialog.Builder(this)
+            .setCancelable(false)
+            .setTitle("检测到帮助手势")
+            .setMessage("是否立即触发紧急告警并向家人发送求助与定位？\n\n可按手机音量键确认告警。")
+            .setPositiveButton("确认告警") { _, _ -> triggerGestureSosNow("帮助手势确认告警") }
+            .setNegativeButton("取消") { _, _ ->
+                helpDialog = null
+                b.tvStatus.text = ""
+            }
+            .create()
+        helpDialog?.setOnDismissListener { helpDialog = null }
+        helpDialog?.show()
     }
 
     private fun demoScriptItems(): List<DemoScriptItem> =
@@ -183,6 +219,7 @@ class MainActivity : AppCompatActivity() {
         val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
         val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
         val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
+        val sentenceIntervalMs = (settings.demoSentenceIntervalSec * 1000).toLong().coerceAtLeast(0L)
         items.forEachIndexed { index, item ->
             val r = Runnable {
                 if (!demoScriptEnabled) return@Runnable
@@ -192,7 +229,7 @@ class MainActivity : AppCompatActivity() {
             main.postDelayed(r, delayMs)
             delayMs += demoItemDurationMs(item, wordIntervalMs, wordIntervalOverridesMs, composeDelayMs)
             if (index < items.lastIndex) {
-                delayMs += DEMO_ITEM_INTERVAL_MS
+                delayMs += sentenceIntervalMs
             }
         }
     }
@@ -333,6 +370,20 @@ class MainActivity : AppCompatActivity() {
         toast(if (ok) "✓ 已向家人发送求助" else "推送失败: $detail")
         history.insert(0, (if (ok) "🆘 已向家人发送求助\n" else "🆘 求助未送达: $detail\n"))
         b.tvHistory.text = history.toString()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (helpDialog?.isShowing == true) {
+                triggerGestureSosNow("帮助手势音量键确认告警")
+                return true
+            }
+            if (sosDialog?.isShowing == true) {
+                sos.fireNow()
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     private fun initTts() {

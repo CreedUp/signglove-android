@@ -44,6 +44,17 @@ class Sos(
         main.postDelayed(tick, 1000)
     }
 
+    /** 明确求救手势: 不倒计时、不弹确认, 直接告警。 */
+    fun triggerNow(reason: String, vitals: VitalsData?) {
+        if (active || AlarmService.running) return
+        main.removeCallbacks(tick)
+        active = true
+        this.reason = reason
+        this.vitals = vitals
+        onCountdown(0, reason)
+        fire()
+    }
+
     fun cancel() {
         main.removeCallbacks(tick)
         active = false

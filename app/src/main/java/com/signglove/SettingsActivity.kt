@@ -33,6 +33,7 @@ class SettingsActivity : AppCompatActivity() {
         b.etDemoWordInterval.setText(settings.demoWordIntervalSec.toString())
         b.etDemoWordIntervals.setText(settings.demoWordIntervalsText)
         b.etDemoComposeDelay.setText(settings.demoComposeDelaySec.toString())
+        b.etDemoSentenceInterval.setText(settings.demoSentenceIntervalSec.toString())
         b.etDemoText.setText(settings.demoText)
 
         b.settingsRoot.setOnClickListener { onBlankSettingsTap() }
@@ -50,6 +51,7 @@ class SettingsActivity : AppCompatActivity() {
             settings.demoWordIntervalSec = (b.etDemoWordInterval.text.toString().trim().toFloatOrNull() ?: 0.6f).coerceAtLeast(0f)
             settings.demoWordIntervalsText = b.etDemoWordIntervals.text.toString().trim()
             settings.demoComposeDelaySec = (b.etDemoComposeDelay.text.toString().trim().toFloatOrNull() ?: 0.8f).coerceAtLeast(0f)
+            settings.demoSentenceIntervalSec = (b.etDemoSentenceInterval.text.toString().trim().toFloatOrNull() ?: 2.0f).coerceAtLeast(0f)
             settings.demoText = b.etDemoText.text.toString().trim()
             Toast.makeText(this, "✓ 设置已保存", Toast.LENGTH_SHORT).show()
             finish()
