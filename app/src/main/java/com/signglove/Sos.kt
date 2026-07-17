@@ -73,16 +73,25 @@ class Sos(
         ctx.startForegroundService(Intent(ctx, AlarmService::class.java)
             .putExtra(AlarmService.EXTRA_REASON, reason))
         // 2) 取定位后推送
-        LocationHelper.current(ctx) { loc ->
-            val mapLine = if (loc != null)
-                "位置: ${"%.6f".format(loc.lat)},${"%.6f".format(loc.lon)}\n地图: ${LocationHelper.amapLink(loc)}"
-            else "位置: 获取失败(请检查定位权限/GPS)"
+        LocationHelper.current(ctx) { result ->
+            val loc = result.location
+            val mapLine = if (loc != null) buildLocationText(loc)
+            else "位置: 获取失败\n定位诊断: ${result.error ?: "未知原因"}"
             val text = buildText(mapLine)
             thread {
                 val (ok, detail) = WeChatPush.send(text, settings.webhook, settings.serverchan)
                 main.post { onPushed(ok, detail) }
             }
         }
+    }
+
+    private fun buildLocationText(loc: LocationHelper.Loc): String {
+        val accuracy = loc.accuracyMeters?.let { "，精度约 ${it.toInt().coerceAtLeast(1)} 米" } ?: ""
+        val age = (System.currentTimeMillis() - loc.capturedAt).coerceAtLeast(0L)
+        val ageText = if (loc.cached) "，缓存约 ${((age + 59_999) / 60_000).coerceAtLeast(1)} 分钟前" else ""
+        return "位置: ${"%.6f".format(Locale.CHINA, loc.lat)},${"%.6f".format(Locale.CHINA, loc.lon)}\n" +
+            "定位来源: ${loc.source}$accuracy$ageText\n" +
+            "地图: ${LocationHelper.amapLink(loc)}"
     }
 
     private fun buildText(mapLine: String): String {

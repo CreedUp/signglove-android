@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.5"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.6"
         initTts()
 
         composer = SentenceComposer(settings,
