@@ -6,7 +6,7 @@ import kotlin.concurrent.thread
 
 /**
  * 停顿断句 + 组句。收到手势词进缓冲, 停顿超过 pauseSec 触发组句:
- * 有 DeepSeek key → 调云端; 否则直拼。结果回主线程。
+ * DeepSeek 已开启且配置 key → 调云端；否则本地直拼。结果回主线程。
  */
 class SentenceComposer(
     private val settings: Settings,
@@ -34,13 +34,23 @@ class SentenceComposer(
         val words = buffer.toList()
         buffer.clear()
         main.post { onComposing() }   // 清词流, 进入"组句中"
+        if (!settings.deepseekEnabled) {
+            main.post { onSentence(words.joinToString(" "), "local_disabled") }
+            return
+        }
         val key = settings.deepseekKey
         if (key.isBlank()) {
-            main.post { onSentence(words.joinToString(" "), "local") }
+            main.post { onSentence(words.joinToString(" "), "local_no_key") }
             return
         }
         thread {
-            val s = DeepSeek.combine(words, key, settings.deepseekModel, settings.deepseekUrl)
+            val s = DeepSeek.combine(
+                words,
+                key,
+                settings.deepseekModel,
+                settings.deepseekUrl,
+                settings.deepseekPrompt
+            )
             val text = s ?: words.joinToString(" ")
             val src = if (s != null) "deepseek" else "fallback"
             main.post { onSentence(text, src) }

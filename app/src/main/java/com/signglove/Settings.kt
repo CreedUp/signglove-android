@@ -4,6 +4,14 @@ import android.content.Context
 
 /** 设置持久化 (SharedPreferences)。对应 PC 版 settings.json。 */
 class Settings(ctx: Context) {
+    companion object {
+        const val DEFAULT_DEEPSEEK_PROMPT =
+            "你是专业的手语翻译助手。用户会按识别顺序输入一串以空格分隔的中文手势词。" +
+            "请结合手语语序，将这些词连成一句自然、通顺、口语化的中文句子；可以调整语序、补充必要虚词并添加恰当标点，" +
+            "但不得改变原意、遗漏关键信息或凭空添加事实。若包含“求救”或“SOS”等紧急信息，必须保留其紧急含义。" +
+            "只输出最终中文句子，不要解释、引号、前缀或其他内容。"
+    }
+
     private val sp = ctx.getSharedPreferences("signglove", Context.MODE_PRIVATE)
 
     var serverchan: String
@@ -22,6 +30,15 @@ class Settings(ctx: Context) {
         get() = sp.getString("deepseek_key", "") ?: ""
         set(v) { sp.edit().putString("deepseek_key", v).apply() }
 
+    var deepseekEnabled: Boolean
+        get() = sp.getBoolean("deepseek_enabled", true)
+        set(v) { sp.edit().putBoolean("deepseek_enabled", v).apply() }
+
+    var deepseekPrompt: String
+        get() = sp.getString("deepseek_prompt", DEFAULT_DEEPSEEK_PROMPT)
+            ?.ifBlank { DEFAULT_DEEPSEEK_PROMPT } ?: DEFAULT_DEEPSEEK_PROMPT
+        set(v) { sp.edit().putString("deepseek_prompt", v.ifBlank { DEFAULT_DEEPSEEK_PROMPT }).apply() }
+
     var deepseekModel: String
         get() = sp.getString("deepseek_model", "deepseek-chat") ?: "deepseek-chat"
         set(v) { sp.edit().putString("deepseek_model", v).apply() }
@@ -38,37 +55,4 @@ class Settings(ctx: Context) {
     var autoSos: Boolean
         get() = sp.getBoolean("auto_sos", true)
         set(v) { sp.edit().putBoolean("auto_sos", v).apply() }
-
-    var demoText: String
-        get() = sp.getString("demo_text", "") ?: ""
-        set(v) { sp.edit().putString("demo_text", v).apply() }
-
-    var demoButtonText: String
-        get() = sp.getString("demo_button_text", "演示输出脚本") ?: "演示输出脚本"
-        set(v) { sp.edit().putString("demo_button_text", v).apply() }
-
-    var demoWaitForGesture: Boolean
-        get() = sp.getBoolean("demo_wait_for_gesture", true)
-        set(v) { sp.edit().putBoolean("demo_wait_for_gesture", v).apply() }
-
-    var demoFirstDelaySec: Float
-        get() = sp.getFloat("demo_first_delay_sec", 1.0f)
-        set(v) { sp.edit().putFloat("demo_first_delay_sec", v).apply() }
-
-    var demoWordIntervalSec: Float
-        get() = sp.getFloat("demo_word_interval_sec", 0.6f)
-        set(v) { sp.edit().putFloat("demo_word_interval_sec", v).apply() }
-
-    var demoWordIntervalsText: String
-        get() = sp.getString("demo_word_intervals_text", "") ?: ""
-        set(v) { sp.edit().putString("demo_word_intervals_text", v).apply() }
-
-    var demoComposeDelaySec: Float
-        get() = sp.getFloat("demo_compose_delay_sec", 0.8f)
-        set(v) { sp.edit().putFloat("demo_compose_delay_sec", v).apply() }
-
-    var demoSentenceIntervalSec: Float
-        get() = sp.getFloat("demo_sentence_interval_sec", 2.0f)
-        set(v) { sp.edit().putFloat("demo_sentence_interval_sec", v).apply() }
-
 }

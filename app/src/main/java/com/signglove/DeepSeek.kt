@@ -14,17 +14,12 @@ object DeepSeek {
         .callTimeout(12, TimeUnit.SECONDS)
         .build()
 
-    private const val SYS =
-        "你是手语翻译助手。用户给一串手语识别出的手势词(空格分隔)。" +
-        "请组合成一句通顺、自然、口语化的中文句子, 补全虚词、时态和标点。" +
-        "只输出句子本身, 不要解释、不要引号、不要多余内容。"
-
     /** 同步调用 (放后台线程)。失败返回 null。 */
-    fun combine(words: List<String>, key: String, model: String, url: String): String? {
+    fun combine(words: List<String>, key: String, model: String, url: String, prompt: String): String? {
         if (key.isBlank()) return null
         return try {
             val messages = JSONArray()
-                .put(JSONObject().put("role", "system").put("content", SYS))
+                .put(JSONObject().put("role", "system").put("content", prompt))
                 .put(JSONObject().put("role", "user").put("content", "手势词序列: " + words.joinToString(" ")))
             val payload = JSONObject()
                 .put("model", model)

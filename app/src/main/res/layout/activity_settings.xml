@@ -4,12 +4,9 @@
     android:layout_height="match_parent"
     android:background="@color/bg">
 
-    <LinearLayout
-        android:id="@+id/settingsRoot"
+        <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
         android:orientation="vertical"
         android:padding="18dp">
 
@@ -36,73 +33,36 @@
             android:layout_marginTop="22dp" android:text="☁ 云端组句（DeepSeek）" android:textColor="@color/txt"
             android:textSize="16sp" android:textStyle="bold" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swDeepseekEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="true"
+            android:text="启用 DeepSeek API 云端连词成句"
+            android:textColor="@color/txt" />
+
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp" android:text="DeepSeek API Key" android:textColor="@color/txt" />
         <EditText android:id="@+id/etDsKey" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="sk-xxxxxx（留空则手势词直接拼接）" android:inputType="text" android:textSize="14sp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="连词成句提示词" android:textColor="@color/txt" />
+        <EditText
+            android:id="@+id/etDeepseekPrompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:hint="输入给 DeepSeek 的系统提示词"
+            android:inputType="textMultiLine"
+            android:minLines="6"
+            android:textSize="14sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp" android:text="停顿断句秒数" android:textColor="@color/txt" />
         <EditText android:id="@+id/etPause" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="2.5" android:inputType="numberDecimal" android:textSize="14sp" />
-
-        <LinearLayout
-            android:id="@+id/groupDemoSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="22dp" android:text="演示输出" android:textColor="@color/txt"
-                android:textSize="16sp" android:textStyle="bold" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/swDemoWaitGesture"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="接收到第一个动作后开始输出"
-                android:textColor="@color/txt" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="主页演示文字" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoButtonText" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="演示输出脚本" android:inputType="text" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="首段延迟秒数" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoFirstDelay" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="1.0" android:inputType="numberDecimal" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="手势词显示间隔秒数" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoWordInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="0.6" android:inputType="numberDecimal" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="每两个手势词之间的间隔秒数（逗号分隔，可不同）" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoWordIntervals" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="例如: 0.3, 1.0, 0.6" android:inputType="text" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="手势词到成句间隔秒数" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoComposeDelay" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="0.8" android:inputType="numberDecimal" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="成句到下一组手势词间隔秒数" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoSentenceInterval" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="2.0" android:inputType="numberDecimal" android:textSize="14sp" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="演示脚本（每行一段）" android:textColor="@color/txt" />
-            <EditText android:id="@+id/etDemoText" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:gravity="top"
-                android:hint="我 你好 =&gt; 你好，我需要帮助&#10;谢谢 =&gt; 谢谢你&#10;我肚子饿了想吃饭"
-                android:inputType="textMultiLine"
-                android:minLines="4"
-                android:textSize="14sp" />
-        </LinearLayout>
 
         <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="22dp" android:text="💾 保存设置" />

@@ -17,9 +17,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.signglove.databinding.ActivityMainBinding
 import java.util.Locale
-import kotlin.random.Random
-
-private data class DemoScriptItem(val words: String, val sentence: String)
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,27 +37,6 @@ class MainActivity : AppCompatActivity() {
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
     private var helpDialog: AlertDialog? = null
-    private var demoScriptEnabled = false
-    private var demoScriptStarted = false
-    private val demoScriptRuns = mutableListOf<Runnable>()
-
-    // 手势模拟: 发一组(2~4)词 → 停顿(>pauseSec)触发组句 → 再发下一组
-    private var simRunning = false
-    private var simWordsLeft = 0
-    private val simNames = listOf("fist", "open", "point", "victory", "ok")
-    private val simTick = object : Runnable {
-        override fun run() {
-            if (!simRunning) return
-            handleGestureName(simNames[Random.nextInt(simNames.size)])
-            simWordsLeft--
-            if (simWordsLeft > 0) {
-                main.postDelayed(this, (600 + Random.nextInt(400)).toLong())  // 词间 0.6~1.0s
-            } else {
-                simWordsLeft = 2 + Random.nextInt(3)                           // 下一组 2~4 词
-                main.postDelayed(this, (settings.pauseSec * 1000).toLong() + 1200) // 停顿>阈值, 触发组句
-            }
-        }
-    }
 
     private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) { refreshDevices() }
@@ -71,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.4"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.5"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -104,7 +80,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun wireControls() {
         b.btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
-        b.tvDemoScript.text = settings.demoButtonText
 
         b.btnConnect.setOnClickListener {
             if (connected) { bt.disconnect() }
@@ -116,22 +91,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        b.swSim.setOnCheckedChangeListener { _, on ->
-            simRunning = on
-            if (on) { showWaitingGesture(); simWordsLeft = 2 + Random.nextInt(3); main.post(simTick) }
-            else main.removeCallbacks(simTick)
-        }
-        b.tvDemoScript.setOnClickListener {
-            clearDemoScript()
-            if (demoScriptItems().isEmpty()) {
-                toast("请先在设置里填写演示脚本")
-                return@setOnClickListener
-            }
-            demoScriptEnabled = true
-            demoScriptStarted = false
-            showWaitingGesture()
-            if (!settings.demoWaitForGesture) startDemoScript()
-        }
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
             toast("自动报警 " + if (on) "开" else "关") }
@@ -140,26 +99,15 @@ class MainActivity : AppCompatActivity() {
             if (!settings.autoSos) { toast("请先打开自动报警开关"); return@setOnClickListener }
             toast("注入异常生命体征…"); vitals.injectDanger()
         }
-        b.btnDemo.setOnClickListener {
-            val demo = listOf(
-                DemoScriptItem("你好", "你好"),
-                DemoScriptItem("谢谢", "谢谢"),
-                DemoScriptItem("请问 需要 帮助 吗", "请问需要帮助吗"),
-                DemoScriptItem("我 肚子 饿了 想 吃饭", "我肚子饿了想吃饭")
-            )
-            runSingleDemoItem(demo[Random.nextInt(demo.size)])
-        }
     }
 
     private fun handleGestureName(name: String) {
-        if (demoScriptEnabled && settings.demoWaitForGesture && !demoScriptStarted) {
-            startDemoScript()
+        if (GestureMap.isSos(name)) {
+            triggerGestureSosNow("SOS 手势触发求救")
             return
         }
-        if (demoScriptEnabled) return
         GestureMap.word(name)?.let { word ->
             when (word) {
-                "求救" -> triggerGestureSosNow("手势词触发求救")
                 "帮助" -> showHelpSosPrompt()
                 else -> composer.feed(word)
             }
@@ -196,124 +144,6 @@ class MainActivity : AppCompatActivity() {
         helpDialog?.show()
     }
 
-    private fun demoScriptItems(): List<DemoScriptItem> =
-        settings.demoText.lines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .map { line ->
-                val parts = line.split("=>", limit = 2)
-                if (parts.size == 2) {
-                    DemoScriptItem(parts[0].trim(), parts[1].trim())
-                } else {
-                    DemoScriptItem(line, line)
-                }
-            }
-            .filter { it.words.isNotEmpty() && it.sentence.isNotEmpty() }
-
-    private fun startDemoScript() {
-        val items = demoScriptItems()
-        if (items.isEmpty()) return
-        demoScriptStarted = true
-        clearDemoScript()
-        var delayMs = (settings.demoFirstDelaySec * 1000).toLong().coerceAtLeast(0L)
-        val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
-        val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
-        val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
-        val sentenceIntervalMs = (settings.demoSentenceIntervalSec * 1000).toLong().coerceAtLeast(0L)
-        items.forEachIndexed { index, item ->
-            val r = Runnable {
-                if (!demoScriptEnabled) return@Runnable
-                showDemoItem(item, index == items.lastIndex)
-            }
-            demoScriptRuns.add(r)
-            main.postDelayed(r, delayMs)
-            delayMs += demoItemDurationMs(item, wordIntervalMs, wordIntervalOverridesMs, composeDelayMs)
-            if (index < items.lastIndex) {
-                delayMs += sentenceIntervalMs
-            }
-        }
-    }
-
-    private fun demoWordIntervalOverridesMs(): List<Long> =
-        parseDelayOverridesMs(settings.demoWordIntervalsText)
-
-    private fun parseDelayOverridesMs(text: String): List<Long> =
-        text
-            .split(Regex("[,，;；\\s]+"))
-            .mapNotNull { it.trim().takeIf { s -> s.isNotEmpty() }?.toFloatOrNull() }
-            .map { (it * 1000).toLong().coerceAtLeast(0L) }
-
-    private fun clearDemoScript() {
-        demoScriptRuns.forEach { main.removeCallbacks(it) }
-        demoScriptRuns.clear()
-    }
-
-    private fun showWaitingGesture() {
-        flow.clear()
-        b.tvGesture.text = "等待手势…"
-        b.tvStatus.text = ""
-        b.tvFlow.text = ""
-    }
-
-    private fun runSingleDemoItem(item: DemoScriptItem) {
-        demoScriptEnabled = true
-        demoScriptStarted = true
-        clearDemoScript()
-        showWaitingGesture()
-        val r = Runnable {
-            if (!demoScriptEnabled) return@Runnable
-            showDemoItem(item, isLast = true)
-        }
-        demoScriptRuns.add(r)
-        main.postDelayed(r, 500L)
-    }
-
-    private fun showDemoItem(item: DemoScriptItem, isLast: Boolean) {
-        flow.clear()
-        val words = item.words.split(Regex("\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
-        val wordIntervalMs = (settings.demoWordIntervalSec * 1000).toLong().coerceAtLeast(0L)
-        val wordIntervalOverridesMs = demoWordIntervalOverridesMs()
-        val composeDelayMs = (settings.demoComposeDelaySec * 1000).toLong().coerceAtLeast(0L)
-        var delayMs = 0L
-
-        words.forEachIndexed { index, word ->
-            val r = Runnable {
-                if (!demoScriptEnabled) return@Runnable
-                flow.append(if (flow.isEmpty()) "" else " ").append(word)
-                b.tvFlow.text = "手势词: $flow"
-                b.tvStatus.text = "… 组句中"
-            }
-            demoScriptRuns.add(r)
-            main.postDelayed(r, delayMs)
-            if (index < words.lastIndex) {
-                delayMs += wordIntervalOverridesMs.getOrNull(index) ?: wordIntervalMs
-            }
-        }
-
-        val sentenceRun = Runnable {
-            if (!demoScriptEnabled) return@Runnable
-            onSentence(item.sentence, "script")
-            if (isLast) {
-                demoScriptEnabled = false
-            }
-        }
-        demoScriptRuns.add(sentenceRun)
-        main.postDelayed(sentenceRun, delayMs + composeDelayMs)
-    }
-
-    private fun demoItemDurationMs(
-        item: DemoScriptItem,
-        wordIntervalMs: Long,
-        wordIntervalOverridesMs: List<Long>,
-        composeDelayMs: Long
-    ): Long {
-        val wordCount = item.words.split(Regex("\\s+")).count { it.trim().isNotEmpty() }
-        val lastWordAt = (0 until (wordCount - 1)).sumOf { index ->
-            wordIntervalOverridesMs.getOrNull(index) ?: wordIntervalMs
-        }
-        return lastWordAt + composeDelayMs
-    }
-
     private fun onSentence(text: String, src: String) {
         b.tvGesture.text = text      // 句子持久展示在大字区
         b.tvStatus.text = ""         // 清"组句中"状态
@@ -322,10 +152,9 @@ class MainActivity : AppCompatActivity() {
         speak(text)
         val tag = when (src) {
             "deepseek" -> "[☁DeepSeek]"
-            "local" -> "[直拼·未配Key]"
+            "local_disabled" -> "[直拼·DeepSeek已关闭]"
+            "local_no_key" -> "[直拼·未配置Key]"
             "fallback" -> "[回退·DeepSeek失败]"
-            "demo" -> "[演示]"
-            "script" -> "[演示]"
             else -> ""
         }
         history.insert(0, "• $text  $tag\n")
@@ -439,15 +268,32 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
 
     private fun requestPerms() {
-        val need = mutableListOf<String>()
+        val ask = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            need.add(Manifest.permission.BLUETOOTH_CONNECT)
-            need.add(Manifest.permission.BLUETOOTH_SCAN)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)
+                ask.add(Manifest.permission.BLUETOOTH_CONNECT)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+                ask.add(Manifest.permission.BLUETOOTH_SCAN)
+
+            // Android 12+ 请求精确定位时，必须把精确与大致定位放在同一批次申请。
+            val fineGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val coarseGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!fineGranted || !coarseGranted) {
+                // 即使其中一个已授权，也保留两项，避免系统忽略单独的精确定位升级请求。
+                ask.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                ask.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                ask.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        need.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            need.add(Manifest.permission.POST_NOTIFICATIONS)
-        val ask = need.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) ask.add(Manifest.permission.POST_NOTIFICATIONS)
         if (ask.isNotEmpty()) permLauncher.launch(ask.toTypedArray()) else refreshDevices()
     }
 
@@ -463,12 +309,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        b.tvDemoScript.text = settings.demoButtonText
         if (hasBt()) refreshDevices()
     }
 
     override fun onDestroy() {
-        bt.disconnect(); vitals.stopSim(); simRunning = false; clearDemoScript()
+        bt.disconnect(); vitals.stopSim()
         tts?.shutdown()
         super.onDestroy()
     }

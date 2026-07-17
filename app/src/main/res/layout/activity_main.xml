@@ -152,14 +152,6 @@
                     android:text="🔌 连接" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swSim"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="🎬 模拟手势数据（无硬件联调）"
-                    android:textColor="@color/txt" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/swAutoSos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -167,20 +159,6 @@
                     android:checked="true"
                     android:text="🆘 生命体征异常自动报警"
                     android:textColor="@color/txt" />
-
-                <TextView
-                    android:id="@+id/tvDemoScript"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:minHeight="48dp"
-                    android:gravity="center_vertical"
-                    android:text="演示输出脚本"
-                    android:textColor="@color/txt"
-                    android:textSize="16sp" />
 
                 <Button
                     android:id="@+id/btnSosTest"
@@ -191,13 +169,6 @@
                     android:text="⚠️ 模拟生命体征异常（测试报警）"
                     android:textColor="@color/bad" />
 
-                <Button
-                    android:id="@+id/btnDemo"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="▶ 演示一句话" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
