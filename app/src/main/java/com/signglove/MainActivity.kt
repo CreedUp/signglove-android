@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.7"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.8"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -94,6 +94,12 @@ class MainActivity : AppCompatActivity() {
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
             toast("自动报警 " + if (on) "开" else "关") }
 
+        b.swGestureSos.isChecked = settings.gestureSosEnabled
+        b.swGestureSos.setOnCheckedChangeListener { _, on ->
+            settings.gestureSosEnabled = on
+            toast("求救手势自动报警 " + if (on) "开" else "关")
+        }
+
         b.btnSosTest.setOnClickListener {
             if (!settings.autoSos) { toast("请先打开自动报警开关"); return@setOnClickListener }
             toast("注入异常生命体征…"); vitals.injectDanger()
@@ -101,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGestureName(name: String) {
-        if (GestureMap.isSos(name)) {
+        if (GestureMap.isSos(name) && settings.gestureSosEnabled) {
             triggerGestureSosNow("SOS 手势触发求救")
             return
         }

@@ -160,6 +160,15 @@
                     android:text="🆘 生命体征异常自动报警"
                     android:textColor="@color/txt" />
 
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swGestureSos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="🆘 求救手势自动报警"
+                    android:textColor="@color/txt" />
+
                 <Button
                     android:id="@+id/btnSosTest"
                     style="?attr/materialButtonOutlinedStyle"

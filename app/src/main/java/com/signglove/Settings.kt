@@ -55,4 +55,8 @@ class Settings(ctx: Context) {
     var autoSos: Boolean
         get() = sp.getBoolean("auto_sos", true)
         set(v) { sp.edit().putBoolean("auto_sos", v).apply() }
+
+    var gestureSosEnabled: Boolean
+        get() = sp.getBoolean("gesture_sos_enabled", true)
+        set(v) { sp.edit().putBoolean("gesture_sos_enabled", v).apply() }
 }
