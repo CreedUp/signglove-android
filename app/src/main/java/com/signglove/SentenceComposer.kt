@@ -34,6 +34,12 @@ class SentenceComposer(
         val words = buffer.toList()
         buffer.clear()
         main.post { onComposing() }   // 清词流, 进入"组句中"
+        // DeepSeek 仅用于“连词成句”。单个词无需改写，直接保留设备识别后的
+        // 中文词，避免“下午好”等正确结果被云端错误替换成数字或其他词。
+        if (!CompositionPolicy.shouldUseDeepSeek(words)) {
+            main.post { onSentence(words.single(), "local_single") }
+            return
+        }
         if (!settings.deepseekEnabled) {
             main.post { onSentence(words.joinToString(" "), "local_disabled") }
             return
@@ -51,8 +57,9 @@ class SentenceComposer(
                 settings.deepseekUrl,
                 settings.deepseekPrompt
             )
-            val text = s ?: words.joinToString(" ")
-            val src = if (s != null) "deepseek" else "fallback"
+            val accepted = s?.takeIf { CompositionPolicy.acceptsDeepSeekResult(words, it) }
+            val text = accepted ?: words.joinToString(" ")
+            val src = if (accepted != null) "deepseek" else "fallback"
             main.post { onSentence(text, src) }
         }
     }

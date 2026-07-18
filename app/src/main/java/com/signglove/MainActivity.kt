@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.8"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.9"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -136,6 +136,7 @@ class MainActivity : AppCompatActivity() {
         speak(text)
         val tag = when (src) {
             "deepseek" -> "[☁DeepSeek]"
+            "local_single" -> "[单词直显]"
             "local_disabled" -> "[直拼·DeepSeek已关闭]"
             "local_no_key" -> "[直拼·未配置Key]"
             "fallback" -> "[回退·DeepSeek失败]"
