@@ -37,8 +37,6 @@ class GestureMapTest {
         "num_0" to "0",
         "num_1" to "1",
         "num_4" to "4",
-        "num_5" to "5",
-        "num_6" to "6",
         "num_7" to "7",
         "num_8" to "8",
         "num_9" to "9",
@@ -49,7 +47,7 @@ class GestureMapTest {
     )
 
     @Test
-    fun `all 39-class firmware words map to chinese`() {
+    fun `all 37-class firmware words map to chinese`() {
         assertTrue(GestureMap.isIdle("idle"))
         assertNull(GestureMap.word("idle"))
         firmwareVocabulary.forEach { (english, chinese) ->

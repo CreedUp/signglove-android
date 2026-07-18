@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.9"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.0"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -117,6 +117,8 @@ class MainActivity : AppCompatActivity() {
             b.tvStatus.text = "未配置手势词：$name"
             return
         }
+        // 识别后立即更新大字区域，避免停顿组句期间仍显示上一次结果（例如旧的“9”）。
+        b.tvGesture.text = word
         composer.feed(word)
     }
 

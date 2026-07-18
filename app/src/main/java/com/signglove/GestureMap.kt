@@ -2,7 +2,7 @@ package com.signglove
 
 import java.util.Locale
 
-/** 设备手势标签 → 中文手势词。39 类主词表与固件 train/vocab.json 保持一致。 */
+/** 设备手势标签 → 中文手势词。37 类主词表与固件 train/vocab.json 保持一致。 */
 object GestureMap {
     private val firmwareVocabulary: Map<String, String?> = linkedMapOf(
         "idle" to null,
@@ -35,8 +35,6 @@ object GestureMap {
         "num_0" to "0",
         "num_1" to "1",
         "num_4" to "4",
-        "num_5" to "5",
-        "num_6" to "6",
         "num_7" to "7",
         "num_8" to "8",
         "num_9" to "9",
