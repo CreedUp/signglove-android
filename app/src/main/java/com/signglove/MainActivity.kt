@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     private val history = StringBuilder()
     private val main = Handler(Looper.getMainLooper())
     private var sosDialog: AlertDialog? = null
-    private var helpDialog: AlertDialog? = null
 
     private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) { refreshDevices() }
@@ -47,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.6"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v1.7"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -106,42 +105,21 @@ class MainActivity : AppCompatActivity() {
             triggerGestureSosNow("SOS 手势触发求救")
             return
         }
-        GestureMap.word(name)?.let { word ->
-            when (word) {
-                "帮助" -> showHelpSosPrompt()
-                else -> composer.feed(word)
-            }
+        if (GestureMap.isIdle(name)) return
+        val word = GestureMap.word(name)
+        if (word == null) {
+            b.tvStatus.text = "未配置手势词：$name"
+            return
         }
+        composer.feed(word)
     }
 
     private fun triggerGestureSosNow(reason: String) {
-        helpDialog?.dismiss()
-        helpDialog = null
         flow.clear()
         b.tvFlow.text = ""
         b.tvGesture.text = "求救"
         b.tvStatus.text = "正在触发紧急告警"
         sos.triggerNow(reason, null)
-    }
-
-    private fun showHelpSosPrompt() {
-        if (helpDialog?.isShowing == true || sos.active || AlarmService.running) return
-        flow.clear()
-        b.tvFlow.text = ""
-        b.tvGesture.text = "帮助"
-        b.tvStatus.text = "等待确认是否告警"
-        helpDialog = AlertDialog.Builder(this)
-            .setCancelable(false)
-            .setTitle("检测到帮助手势")
-            .setMessage("是否立即触发紧急告警并向家人发送求助与定位？\n\n可按手机音量键确认告警。")
-            .setPositiveButton("确认告警") { _, _ -> triggerGestureSosNow("帮助手势确认告警") }
-            .setNegativeButton("取消") { _, _ ->
-                helpDialog = null
-                b.tvStatus.text = ""
-            }
-            .create()
-        helpDialog?.setOnDismissListener { helpDialog = null }
-        helpDialog?.show()
     }
 
     private fun onSentence(text: String, src: String) {
@@ -203,10 +181,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            if (helpDialog?.isShowing == true) {
-                triggerGestureSosNow("帮助手势音量键确认告警")
-                return true
-            }
             if (sosDialog?.isShowing == true) {
                 sos.fireNow()
                 return true

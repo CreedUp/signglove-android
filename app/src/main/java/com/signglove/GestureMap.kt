@@ -2,38 +2,77 @@ package com.signglove
 
 import java.util.Locale
 
-/** 设备手势标签 → 中文手势词。null = 忽略（如 idle/静止）。 */
+/** 设备手势标签 → 中文手势词。39 类主词表与固件 train/vocab.json 保持一致。 */
 object GestureMap {
-    private val map: Map<String, String?> = mapOf(
+    private val firmwareVocabulary: Map<String, String?> = linkedMapOf(
         "idle" to null,
-        "静止" to null,
-        "fist" to "我",
-        "握拳" to "我",
-        "拳头" to "我",
-        "我" to "我",
-        "open" to "你好",
-        "张开" to "你好",
-        "张手" to "你好",
-        "你好" to "你好",
-        "point" to "这个",
-        "指向" to "这个",
-        "这个" to "这个",
-        "victory" to "需要",
-        "胜利" to "需要",
-        "剪刀手" to "需要",
-        "需要" to "需要",
-        "ok" to "好的",
-        "确认" to "好的",
-        "好的" to "好的",
+        "hello" to "你好",
+        "thanks" to "谢谢",
+        "bye" to "再见",
+        "me" to "我",
+        "you" to "你",
+        "want" to "要",
+        "water" to "喝水",
+        "eat" to "吃饭",
+        "toilet" to "厕所",
         "help" to "帮助",
-        "帮助" to "帮助",
+        "pain" to "疼痛",
+        "home" to "家",
         "sos" to "求救",
-        "rescue" to "求救",
-        "emergency" to "求救",
-        "求救" to "求救",
+        "go" to "走",
+        "come" to "过来",
+        "stop" to "停",
+        "sorry" to "对不起",
+        "please" to "请",
+        "you_all" to "你们",
+        "why" to "为什么",
+        "where" to "哪里",
+        "how" to "怎么样",
+        "teacher" to "老师",
+        "go_to" to "去",
+        "look" to "看",
+        "judge" to "评委",
+        "num_0" to "0",
+        "num_1" to "1",
+        "num_4" to "4",
+        "num_5" to "5",
+        "num_6" to "6",
+        "num_7" to "7",
+        "num_8" to "8",
+        "num_9" to "9",
+        "welcome" to "欢迎",
+        "good_afternoon" to "下午好",
+        "very" to "很",
+        "think" to "想",
     )
 
-    /** 解析一行: "GESTURE:fist" → "fist"; 容错纯文本也当手势名。 */
+    /** 兼容早期 6 类固件以及中文标签直传。 */
+    private val map: Map<String, String?> = buildMap {
+        putAll(firmwareVocabulary)
+        firmwareVocabulary.values.filterNotNull().forEach { chinese -> put(chinese, chinese) }
+        put("静止", null)
+        put("静息", null)
+        put("fist", "我")
+        put("握拳", "我")
+        put("拳头", "我")
+        put("open", "你好")
+        put("张开", "你好")
+        put("张手", "你好")
+        put("point", "这个")
+        put("指向", "这个")
+        put("这个", "这个")
+        put("victory", "需要")
+        put("胜利", "需要")
+        put("剪刀手", "需要")
+        put("需要", "需要")
+        put("ok", "好的")
+        put("确认", "好的")
+        put("好的", "好的")
+        put("rescue", "求救")
+        put("emergency", "求救")
+    }
+
+    /** 解析一行: "GESTURE:hello" → "hello"; 容错纯文本也当手势名。 */
     fun parseGesture(line: String): String? {
         val s = line.trim()
         if (s.isEmpty()) return null
@@ -43,6 +82,9 @@ object GestureMap {
     /** SOS 标签大小写不敏感，中文“求救”也能直接识别。 */
     fun isSos(name: String): Boolean =
         normalize(name) in setOf("sos", "rescue", "emergency", "求救")
+
+    /** idle/静息只表示没有动作，不进入组句，也不显示未知词提示。 */
+    fun isIdle(name: String): Boolean = normalize(name) in setOf("idle", "静止", "静息")
 
     /** 手势名 → 中文词。未知英文标签不再原样显示，中文词可直接透传。 */
     fun word(name: String): String? {
