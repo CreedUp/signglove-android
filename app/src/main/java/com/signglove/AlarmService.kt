@@ -7,18 +7,25 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import java.util.Locale
 
 /**
- * 前台服务: 持续响铃(STREAM_ALARM 最大音量)+ 持续震动, 直到 stopService。
+ * 前台服务: 循环播报“我需要帮助”(STREAM_ALARM 最大音量)+ 持续震动, 直到 stopService。
  * 配 fullScreenIntent 通知, 锁屏也能拉起 AlarmActivity。满足"一直响到手动关闭"。
  */
 class AlarmService : Service() {
@@ -27,9 +34,15 @@ class AlarmService : Service() {
         const val CHANNEL = "sos_alarm"
         const val NOTIF_ID = 911
         const val EXTRA_REASON = "reason"
+        private const val HELP_MESSAGE = "我需要帮助"
+        private const val HELP_UTTERANCE_ID = "signglove-sos-help"
+        private const val HELP_REPEAT_DELAY_MS = 450L
         @Volatile var running = false
     }
 
+    private val main = Handler(Looper.getMainLooper())
+    private var tts: TextToSpeech? = null
+    @Volatile private var keepSpeaking = false
     private var player: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -82,9 +95,77 @@ class AlarmService : Service() {
             am.setStreamVolume(AudioManager.STREAM_ALARM,
                 am.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
         } catch (_: Exception) {}
-        // 循环铃声
+        // 循环中文求助语音；TTS 不可用时才回退到系统告警铃声，确保紧急告警仍有声音。
+        if (!keepSpeaking) startHelpVoiceLoop()
+        // 循环震动
+        startVibration()
+    }
+
+    private fun startHelpVoiceLoop() {
+        keepSpeaking = true
         try {
-            var uri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
+            tts = TextToSpeech(applicationContext) { status ->
+                val engine = tts
+                if (!keepSpeaking || engine == null) return@TextToSpeech
+                if (status != TextToSpeech.SUCCESS) {
+                    startFallbackTone()
+                    return@TextToSpeech
+                }
+
+                val zhResult = engine.setLanguage(Locale.CHINA)
+                if (zhResult == TextToSpeech.LANG_MISSING_DATA ||
+                    zhResult == TextToSpeech.LANG_NOT_SUPPORTED
+                ) engine.setLanguage(Locale.getDefault())
+                engine.setSpeechRate(0.9f)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    engine.setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                }
+                engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) = Unit
+
+                    override fun onDone(utteranceId: String?) {
+                        if (utteranceId == HELP_UTTERANCE_ID) scheduleNextHelpMessage()
+                    }
+
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(utteranceId: String?) {
+                        main.post { if (keepSpeaking) startFallbackTone() }
+                    }
+                })
+                speakHelpMessage()
+            }
+        } catch (_: Exception) {
+            startFallbackTone()
+        }
+    }
+
+    private fun speakHelpMessage() {
+        if (!keepSpeaking) return
+        val params = Bundle().apply {
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+        }
+        val result = tts?.speak(
+            HELP_MESSAGE,
+            TextToSpeech.QUEUE_FLUSH,
+            params,
+            HELP_UTTERANCE_ID
+        ) ?: TextToSpeech.ERROR
+        if (result == TextToSpeech.ERROR) startFallbackTone()
+    }
+
+    private fun scheduleNextHelpMessage() {
+        main.postDelayed({ if (keepSpeaking) speakHelpMessage() }, HELP_REPEAT_DELAY_MS)
+    }
+
+    private fun startFallbackTone() {
+        if (!keepSpeaking || player != null) return
+        try {
+            val uri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE)
             if (uri != null) {
                 player = MediaPlayer().apply {
@@ -96,7 +177,9 @@ class AlarmService : Service() {
                 }
             }
         } catch (_: Exception) {}
-        // 循环震动
+    }
+
+    private fun startVibration() {
         try {
             vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
@@ -122,6 +205,10 @@ class AlarmService : Service() {
 
     override fun onDestroy() {
         running = false
+        keepSpeaking = false
+        main.removeCallbacksAndMessages(null)
+        try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
+        tts = null
         try { player?.stop(); player?.release() } catch (_: Exception) {}
         player = null
         try { vibrator?.cancel() } catch (_: Exception) {}
