@@ -18,7 +18,7 @@ class Vitals(
     private val main = Handler(Looper.getMainLooper())
     private var simRunning = false
     private var streak = 0
-    private var last: VitalsData? = null
+    @Volatile private var last: VitalsData? = null
     private val dangerStreakNeed = 3
 
     private val simTick = object : Runnable {
@@ -43,6 +43,9 @@ class Vitals(
         simRunning = false
         main.removeCallbacks(simTick)
     }
+
+    /** 最近一次有效读数，供手势 SOS 在立即告警时一并发送。 */
+    fun latest(): VitalsData? = last
 
     /** 注入一组读数(模拟或真实), 更新 UI 并做异常检测。 */
     fun feed(v: VitalsData) {

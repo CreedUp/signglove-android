@@ -100,8 +100,13 @@ class Sos(
         sb.append("【紧急求助】${settings.userName} 触发求助\n")
         sb.append("时间: $ts\n")
         sb.append("原因: $reason\n")
-        vitals?.let {
-            sb.append("心率: ${it.hr} BPM\n血氧: ${it.spo2} %\n体温: ${it.temp} ℃\n")
+        val currentVitals = vitals
+        if (currentVitals != null) {
+            sb.append("心率: ${currentVitals.hr} BPM\n")
+            sb.append("血氧: ${currentVitals.spo2} %\n")
+            sb.append("体温: ${currentVitals.temp} ℃\n")
+        } else {
+            sb.append("生命体征: 暂无有效读数\n")
         }
         sb.append(mapLine)
         return sb.toString()

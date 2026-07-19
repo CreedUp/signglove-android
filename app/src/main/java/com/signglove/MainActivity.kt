@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.3"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.4"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -188,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         b.tvFlow.text = ""
         b.tvGesture.text = "求救"
         b.tvStatus.text = "正在触发紧急告警"
-        sos.triggerNow(reason, null)
+        sos.triggerNow(reason, vitals.latest())
     }
 
     private fun onSentence(text: String, src: String) {
