@@ -161,6 +161,40 @@
                     android:textColor="@color/txt" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swDeepseekEnabled"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="☁ 云端语义补全与组句"
+                    android:textColor="@color/txt" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="停顿断句秒数"
+                        android:textColor="@color/txt" />
+
+                    <EditText
+                        android:id="@+id/etPause"
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:hint="2.5"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberDecimal"
+                        android:maxLines="1"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/swAutoSos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

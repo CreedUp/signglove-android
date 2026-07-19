@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import com.signglove.databinding.ActivityMainBinding
 import java.util.Locale
 
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.2"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.3"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -117,6 +118,33 @@ class MainActivity : AppCompatActivity() {
             b.tvStatus.text = "蓝牙保持连接，不处理手势数据"
         }
 
+        b.swDeepseekEnabled.isChecked = settings.deepseekEnabled
+        b.etPause.setText(formatPause(settings.pauseSec))
+        b.etPause.isEnabled = settings.deepseekEnabled
+        b.swDeepseekEnabled.setOnCheckedChangeListener { _, on ->
+            settings.deepseekEnabled = on
+            b.etPause.isEnabled = on
+            composer.clear()
+            flow.clear()
+            b.tvFlow.text = ""
+            if (settings.gestureRecognitionEnabled) {
+                b.tvStatus.text = if (on) {
+                    "云端组句已开启，停顿 ${formatPause(settings.pauseSec)} 秒后成句"
+                } else {
+                    "云端组句已关闭，手势即时识别"
+                }
+            }
+            toast(if (on) "云端语义补全已开启" else "已切换为即时手势识别")
+        }
+        b.etPause.doAfterTextChanged { text ->
+            text?.toString()?.toFloatOrNull()?.takeIf { it in 0.5f..30f }?.let {
+                settings.pauseSec = it
+            }
+        }
+        b.etPause.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) normalizePauseInput()
+        }
+
         b.swAutoSos.isChecked = settings.autoSos
         b.swAutoSos.setOnCheckedChangeListener { _, on -> settings.autoSos = on
             toast("自动报警 " + if (on) "开" else "关") }
@@ -147,7 +175,12 @@ class MainActivity : AppCompatActivity() {
         }
         // 识别后立即更新大字区域，避免停顿组句期间仍显示上一次结果（例如旧的“9”）。
         b.tvGesture.text = word
-        composer.feed(word)
+        if (settings.deepseekEnabled) {
+            composer.feed(word)
+        } else {
+            // 云端关闭时是普通即时识别模式，不等待停顿断句。
+            onSentence(word, "local_realtime")
+        }
     }
 
     private fun triggerGestureSosNow(reason: String) {
@@ -166,6 +199,7 @@ class MainActivity : AppCompatActivity() {
         speak(text)
         val tag = when (src) {
             "deepseek" -> "[☁DeepSeek]"
+            "local_realtime" -> "[即时识别]"
             "local_single" -> "[单词直显]"
             "local_disabled" -> "[直拼·DeepSeek已关闭]"
             "local_no_key" -> "[直拼·未配置Key]"
@@ -196,7 +230,13 @@ class MainActivity : AppCompatActivity() {
             lockDeviceListToConnectedDevice()
             b.tvBle.text = "蓝牙: 已连接 · ${targetDevice?.first ?: "当前设备"}"
             b.btnConnect.text = "⏏ 断开"
-            if (settings.gestureRecognitionEnabled) b.tvStatus.text = "手势识别已开启"
+            if (settings.gestureRecognitionEnabled) {
+                b.tvStatus.text = if (settings.deepseekEnabled) {
+                    "手势识别已开启 · 云端组句"
+                } else {
+                    "手势识别已开启 · 即时模式"
+                }
+            }
         } else {
             b.tvBle.text = if (targetDevice != null) "蓝牙: 正在连接…" else "蓝牙: 未连接"
             b.btnConnect.text = if (targetDevice != null) "取消连接" else "🔌 连接"
@@ -214,6 +254,17 @@ class MainActivity : AppCompatActivity() {
         b.spDevices.setSelection(0)
         b.spDevices.isEnabled = false
     }
+
+    private fun normalizePauseInput() {
+        val pause = b.etPause.text.toString().toFloatOrNull()
+            ?.coerceIn(0.5f, 30f) ?: settings.pauseSec
+        settings.pauseSec = pause
+        val normalized = formatPause(pause)
+        if (b.etPause.text.toString() != normalized) b.etPause.setText(normalized)
+    }
+
+    private fun formatPause(seconds: Float): String =
+        if (seconds % 1f == 0f) seconds.toInt().toString() else seconds.toString()
 
     private fun showVitalsPlaceholder() {
         b.tvHr.text = "❤️\n--\nBPM"

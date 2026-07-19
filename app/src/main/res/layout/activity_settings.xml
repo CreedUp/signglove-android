@@ -2,11 +2,15 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg">
+    android:background="@color/bg"
+    android:fillViewport="true">
 
-        <LinearLayout
+    <LinearLayout
+        android:id="@+id/settingsRoot"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
         android:orientation="vertical"
         android:padding="18dp">
 
@@ -33,36 +37,43 @@
             android:layout_marginTop="22dp" android:text="☁ 云端组句（DeepSeek）" android:textColor="@color/txt"
             android:textSize="16sp" android:textStyle="bold" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/swDeepseekEnabled"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:checked="true"
-            android:text="启用 DeepSeek API 云端连词成句"
-            android:textColor="@color/txt" />
-
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp" android:text="DeepSeek API Key" android:textColor="@color/txt" />
         <EditText android:id="@+id/etDsKey" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="sk-xxxxxx（留空则手势词直接拼接）" android:inputType="text" android:textSize="14sp" />
+            android:hint="sk-xxxxxx（云端开关与断句秒数在主页）" android:inputType="text" android:textSize="14sp" />
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:text="连词成句提示词" android:textColor="@color/txt" />
-        <EditText
-            android:id="@+id/etDeepseekPrompt"
+        <LinearLayout
+            android:id="@+id/promptEditorSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="top|start"
-            android:hint="输入给 DeepSeek 的系统提示词"
-            android:inputType="textMultiLine"
-            android:minLines="6"
-            android:textSize="14sp" />
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:text="停顿断句秒数" android:textColor="@color/txt" />
-        <EditText android:id="@+id/etPause" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="2.5" android:inputType="numberDecimal" android:textSize="14sp" />
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swPromptEditorVisible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="以后默认显示提示词编辑器"
+                android:textColor="@color/txt" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="云端语义补全提示词"
+                android:textColor="@color/txt" />
+
+            <EditText
+                android:id="@+id/etDeepseekPrompt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="输入给 DeepSeek 的系统提示词"
+                android:inputType="textMultiLine"
+                android:minLines="8"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="22dp" android:text="💾 保存设置" />
