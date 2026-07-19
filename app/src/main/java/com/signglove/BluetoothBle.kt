@@ -50,6 +50,10 @@ class BluetoothBle(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
+            if (g !== gatt) {
+                try { g.close() } catch (_: Exception) {}
+                return
+            }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 g.discoverServices()
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -63,6 +67,7 @@ class BluetoothBle(
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
+            if (g !== gatt) return
             val svc = g.getService(UUID_FFE0) ?: return
             val ch = svc.getCharacteristic(UUID_FFE1) ?: return
             g.setCharacteristicNotification(ch, true)
@@ -117,7 +122,10 @@ class BluetoothBle(
 
     fun disconnect() {
         running = false
+        mac = null
+        try { gatt?.disconnect() } catch (_: Exception) {}
         try { gatt?.close() } catch (_: Exception) {}
         gatt = null
+        main.post { onState(false) }
     }
 }

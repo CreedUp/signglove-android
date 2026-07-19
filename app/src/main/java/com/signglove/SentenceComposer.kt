@@ -17,6 +17,7 @@ class SentenceComposer(
     private val main = Handler(Looper.getMainLooper())
     private val buffer = mutableListOf<String>()
     private var pending: Runnable? = null
+    @Volatile private var generation = 0L
 
     /** 收到一个手势词。 */
     fun feed(word: String) {
@@ -28,25 +29,36 @@ class SentenceComposer(
         main.postDelayed(r, (settings.pauseSec * 1000).toLong())
     }
 
+    /** 关闭手势识别时丢弃尚未组句的词，并屏蔽已经发出的异步结果。 */
+    fun clear() {
+        generation++
+        buffer.clear()
+        pending?.let { main.removeCallbacks(it) }
+        pending = null
+    }
+
     private fun fire() {
         pending = null
         if (buffer.isEmpty()) return
+        val requestGeneration = generation
         val words = buffer.toList()
         buffer.clear()
-        main.post { onComposing() }   // 清词流, 进入"组句中"
+        main.post {
+            if (generation == requestGeneration) onComposing()
+        }   // 清词流, 进入"组句中"
         // DeepSeek 仅用于“连词成句”。单个词无需改写，直接保留设备识别后的
         // 中文词，避免“下午好”等正确结果被云端错误替换成数字或其他词。
         if (!CompositionPolicy.shouldUseDeepSeek(words)) {
-            main.post { onSentence(words.single(), "local_single") }
+            deliver(words.single(), "local_single", requestGeneration)
             return
         }
         if (!settings.deepseekEnabled) {
-            main.post { onSentence(words.joinToString(" "), "local_disabled") }
+            deliver(words.joinToString(" "), "local_disabled", requestGeneration)
             return
         }
         val key = settings.deepseekKey
         if (key.isBlank()) {
-            main.post { onSentence(words.joinToString(" "), "local_no_key") }
+            deliver(words.joinToString(" "), "local_no_key", requestGeneration)
             return
         }
         thread {
@@ -60,7 +72,13 @@ class SentenceComposer(
             val accepted = s?.takeIf { CompositionPolicy.acceptsDeepSeekResult(words, it) }
             val text = accepted ?: words.joinToString(" ")
             val src = if (accepted != null) "deepseek" else "fallback"
-            main.post { onSentence(text, src) }
+            deliver(text, src, requestGeneration)
+        }
+    }
+
+    private fun deliver(text: String, source: String, requestGeneration: Long) {
+        main.post {
+            if (generation == requestGeneration) onSentence(text, source)
         }
     }
 }

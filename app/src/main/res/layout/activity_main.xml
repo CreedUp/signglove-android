@@ -152,10 +152,19 @@
                     android:text="🔌 连接" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swAutoSos"
+                    android:id="@+id/swGestureRecognition"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:checked="true"
+                    android:text="🫡 开启手势识别"
+                    android:textColor="@color/txt" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swAutoSos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:checked="true"
                     android:text="🆘 生命体征异常自动报警"
                     android:textColor="@color/txt" />

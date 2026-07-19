@@ -59,4 +59,12 @@ class Settings(ctx: Context) {
     var gestureSosEnabled: Boolean
         get() = sp.getBoolean("gesture_sos_enabled", true)
         set(v) { sp.edit().putBoolean("gesture_sos_enabled", v).apply() }
+
+    var gestureRecognitionEnabled: Boolean
+        get() = sp.getBoolean("gesture_recognition_enabled", true)
+        set(v) { sp.edit().putBoolean("gesture_recognition_enabled", v).apply() }
+
+    var lastBluetoothMac: String
+        get() = sp.getString("last_bluetooth_mac", "") ?: ""
+        set(v) { sp.edit().putString("last_bluetooth_mac", v).apply() }
 }

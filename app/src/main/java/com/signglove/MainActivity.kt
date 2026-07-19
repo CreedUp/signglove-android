@@ -30,8 +30,10 @@ class MainActivity : AppCompatActivity() {
     private var ttsReady = false
     private var ttsWarned = false
 
+    private var pairedDevices = listOf<Pair<String, String>>()
     private var deviceMacs = listOf<String>()
     private var connected = false
+    private var targetDevice: Pair<String, String>? = null
     private val flow = StringBuilder()
     private val history = StringBuilder()
     private val main = Handler(Looper.getMainLooper())
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(b.root)
 
         settings = Settings(this)
-        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.0"
+        b.tvTitle.text = "🧤 手语手套 · 智能监测  v2.1"
         initTts()
 
         composer = SentenceComposer(settings,
@@ -66,10 +68,7 @@ class MainActivity : AppCompatActivity() {
         bt = BluetoothBle(
             ctx = this,
             onLine = { line -> GestureMap.parseGesture(line)?.let { name -> handleGestureName(name) } },
-            onState = { c -> connected = c
-                b.tvBle.text = if (c) "蓝牙: 已连接" else "蓝牙: 未连接"
-                b.btnConnect.text = if (c) "⏏ 断开" else "🔌 连接"
-                updateVitalsConnectionState() })
+            onState = { c -> updateBluetoothState(c) })
 
         wireControls()
         updateVitalsConnectionState()
@@ -81,13 +80,41 @@ class MainActivity : AppCompatActivity() {
         b.btnSettings.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
 
         b.btnConnect.setOnClickListener {
-            if (connected) { bt.disconnect() }
+            if (connected || targetDevice != null) {
+                targetDevice = null
+                bt.disconnect()
+            }
             else {
                 val pos = b.spDevices.selectedItemPosition
-                if (pos < 0 || pos >= deviceMacs.size) { toast("请先在系统设置配对 JDY-18, 再刷新选择"); return@setOnClickListener }
+                if (pos < 0 || pos >= pairedDevices.size) { toast("请先在系统设置配对 JDY-18, 再刷新选择"); return@setOnClickListener }
                 if (!hasBt()) { requestPerms(); return@setOnClickListener }
-                bt.connect(deviceMacs[pos]); toast("连接中…")
+                targetDevice = pairedDevices[pos]
+                settings.lastBluetoothMac = pairedDevices[pos].second
+                b.btnConnect.text = "取消连接"
+                bt.connect(pairedDevices[pos].second); toast("连接中…")
             }
+        }
+
+        b.swGestureRecognition.isChecked = settings.gestureRecognitionEnabled
+        b.swGestureSos.isEnabled = settings.gestureRecognitionEnabled
+        b.swGestureRecognition.setOnCheckedChangeListener { _, on ->
+            settings.gestureRecognitionEnabled = on
+            b.swGestureSos.isEnabled = on
+            if (on) {
+                b.tvGesture.text = "等待手势…"
+                b.tvStatus.text = if (connected) "手势识别已开启" else "请先连接蓝牙手套"
+            } else {
+                composer.clear()
+                flow.clear()
+                b.tvFlow.text = ""
+                b.tvGesture.text = "手势识别已关闭"
+                b.tvStatus.text = "蓝牙保持连接，不处理手势数据"
+            }
+            toast("手势识别 " + if (on) "开" else "关")
+        }
+        if (!settings.gestureRecognitionEnabled) {
+            b.tvGesture.text = "手势识别已关闭"
+            b.tvStatus.text = "蓝牙保持连接，不处理手势数据"
         }
 
         b.swAutoSos.isChecked = settings.autoSos
@@ -107,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGestureName(name: String) {
+        if (!settings.gestureRecognitionEnabled) return
         if (GestureMap.isSos(name) && settings.gestureSosEnabled) {
             triggerGestureSosNow("SOS 手势触发求救")
             return
@@ -160,6 +188,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateVitalsConnectionState() {
         if (!connected) showVitalsPlaceholder()
+    }
+
+    private fun updateBluetoothState(isConnected: Boolean) {
+        connected = isConnected
+        if (isConnected) {
+            lockDeviceListToConnectedDevice()
+            b.tvBle.text = "蓝牙: 已连接 · ${targetDevice?.first ?: "当前设备"}"
+            b.btnConnect.text = "⏏ 断开"
+            if (settings.gestureRecognitionEnabled) b.tvStatus.text = "手势识别已开启"
+        } else {
+            b.tvBle.text = if (targetDevice != null) "蓝牙: 正在连接…" else "蓝牙: 未连接"
+            b.btnConnect.text = if (targetDevice != null) "取消连接" else "🔌 连接"
+            refreshDevices()
+        }
+        updateVitalsConnectionState()
+    }
+
+    /** 连接成功后列表只显示当前设备，断开后 refreshDevices() 才恢复完整列表。 */
+    private fun lockDeviceListToConnectedDevice() {
+        val device = targetDevice ?: return
+        deviceMacs = listOf(device.second)
+        val label = listOf("✓ ${device.first}  ${device.second}（已连接）")
+        b.spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, label)
+        b.spDevices.setSelection(0)
+        b.spDevices.isEnabled = false
     }
 
     private fun showVitalsPlaceholder() {
@@ -281,18 +334,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshDevices() {
+        if (connected) {
+            lockDeviceListToConnectedDevice()
+            return
+        }
         if (!bt.isAvailable()) { b.tvBle.text = "蓝牙: 设备不支持"; return }
         if (!bt.isEnabled()) { b.tvBle.text = "蓝牙: 未开启(请打开手机蓝牙)" }
         val list = bt.bondedDevices()
+        pairedDevices = list
         deviceMacs = list.map { it.second }
         val labels = if (list.isEmpty()) listOf("无已配对设备(先配对 JDY-18)")
                      else list.map { "${it.first}  ${it.second}" }
         b.spDevices.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
+        b.spDevices.isEnabled = list.isNotEmpty()
+        val preferredMac = targetDevice?.second ?: settings.lastBluetoothMac
+        val preferredIndex = deviceMacs.indexOf(preferredMac)
+        if (preferredIndex >= 0) b.spDevices.setSelection(preferredIndex)
     }
 
     override fun onResume() {
         super.onResume()
-        if (hasBt()) refreshDevices()
+        if (hasBt()) {
+            if (connected) lockDeviceListToConnectedDevice() else refreshDevices()
+        }
     }
 
     override fun onDestroy() {
