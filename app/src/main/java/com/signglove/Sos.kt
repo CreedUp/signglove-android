@@ -102,9 +102,6 @@ class Sos(
         sb.append("原因: $reason\n")
         val currentVitals = vitals
         if (currentVitals != null) {
-            sb.append(
-                "生命体征来源: ${if (currentVitals.simulated) "APP 模拟数据（非真实医疗测量）" else "手套传感器数据"}\n"
-            )
             sb.append("心率: ${currentVitals.hr} BPM\n")
             sb.append("血氧: ${currentVitals.spo2} %\n")
             sb.append("体温: ${currentVitals.temp} ℃\n")
